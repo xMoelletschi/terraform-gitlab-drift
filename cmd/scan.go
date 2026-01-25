@@ -22,6 +22,7 @@ func init() {
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	token := gitlabToken
 	if token == "" {
 		token = os.Getenv("GITLAB_TOKEN")
@@ -40,8 +41,14 @@ func runScan(cmd *cobra.Command, args []string) error {
 		fmt.Errorf("TODO")
 	}
 
-	// TODO:
 	// Fetch resources from GitLab API
+	resources, err := client.FetchAll(ctx)
+	if err != nil {
+		fmt.Errorf("TODO")
+	}
+	// parse files
+	// check if its in the files
+	// TODO:
 	// Write to Terraform files
 	// Compare and find unmanaged resources
 	// Output results
