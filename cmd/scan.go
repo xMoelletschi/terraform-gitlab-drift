@@ -36,16 +36,18 @@ func runScan(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  Terraform dir: %s\n", terraformDir)
 	fmt.Printf("  Create MR: %v\n", createMR)
 
-	client, err := gitlab.NewClient(gitlabToken, gitlabURL)
+	client, err := gitlab.NewClient(token, gitlabURL)
 	if err != nil {
-		fmt.Errorf("TODO")
+		return fmt.Errorf("creating client: %w", err)
 	}
 
 	// Fetch resources from GitLab API
 	resources, err := client.FetchAll(ctx)
 	if err != nil {
-		fmt.Errorf("TODO")
+		return fmt.Errorf("fetching resources: %w", err)
 	}
+
+	_ = resources
 	// parse files
 	// check if its in the files
 	// TODO:
