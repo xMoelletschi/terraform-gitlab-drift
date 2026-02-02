@@ -1,0 +1,120 @@
+package terraform
+
+import (
+	"io"
+
+	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/zclconf/go-cty/cty"
+	gl "gitlab.com/gitlab-org/api/client-go"
+)
+
+// WriteGroups writes GitLab groups as Terraform HCL resources.
+func WriteGroups(groups []*gl.Group, w io.Writer) error {
+	f := hclwrite.NewEmptyFile()
+	rootBody := f.Body()
+
+	for _, g := range groups {
+		block := rootBody.AppendNewBlock("resource", []string{"gitlab_group", normalizeToTerraformName(g.Path)})
+		body := block.Body()
+
+		// Required
+		body.SetAttributeValue("name", cty.StringVal(g.Name))
+		body.SetAttributeValue("path", cty.StringVal(g.Path))
+
+		// Optional - only set if non-default
+		if g.Description != "" {
+			body.SetAttributeValue("description", cty.StringVal(g.Description))
+		}
+		if g.Visibility != "" {
+			body.SetAttributeValue("visibility_level", cty.StringVal(string(g.Visibility)))
+		}
+		if g.ParentID != 0 {
+			body.SetAttributeValue("parent_id", cty.NumberIntVal(int64(g.ParentID)))
+		}
+		if g.LFSEnabled {
+			body.SetAttributeValue("lfs_enabled", cty.BoolVal(g.LFSEnabled))
+		}
+		if g.RequestAccessEnabled {
+			body.SetAttributeValue("request_access_enabled", cty.BoolVal(g.RequestAccessEnabled))
+		}
+		if g.MembershipLock {
+			body.SetAttributeValue("membership_lock", cty.BoolVal(g.MembershipLock))
+		}
+		if g.ShareWithGroupLock {
+			body.SetAttributeValue("share_with_group_lock", cty.BoolVal(g.ShareWithGroupLock))
+		}
+		if g.RequireTwoFactorAuth {
+			body.SetAttributeValue("require_two_factor_authentication", cty.BoolVal(g.RequireTwoFactorAuth))
+		}
+		if g.TwoFactorGracePeriod != 0 {
+			body.SetAttributeValue("two_factor_grace_period", cty.NumberIntVal(g.TwoFactorGracePeriod))
+		}
+		if g.ProjectCreationLevel != "" {
+			body.SetAttributeValue("project_creation_level", cty.StringVal(string(g.ProjectCreationLevel)))
+		}
+		if g.SubGroupCreationLevel != "" {
+			body.SetAttributeValue("subgroup_creation_level", cty.StringVal(string(g.SubGroupCreationLevel)))
+		}
+		if g.AutoDevopsEnabled {
+			body.SetAttributeValue("auto_devops_enabled", cty.BoolVal(g.AutoDevopsEnabled))
+		}
+		if !g.EmailsEnabled {
+			body.SetAttributeValue("emails_enabled", cty.BoolVal(g.EmailsEnabled))
+		}
+		if g.MentionsDisabled {
+			body.SetAttributeValue("mentions_disabled", cty.BoolVal(g.MentionsDisabled))
+		}
+		if g.PreventForkingOutsideGroup {
+			body.SetAttributeValue("prevent_forking_outside_group", cty.BoolVal(g.PreventForkingOutsideGroup))
+		}
+		if g.SharedRunnersSetting != "" {
+			body.SetAttributeValue("shared_runners_setting", cty.StringVal(string(g.SharedRunnersSetting)))
+		}
+		if g.DefaultBranch != "" {
+			body.SetAttributeValue("default_branch", cty.StringVal(g.DefaultBranch))
+		}
+		if g.WikiAccessLevel != "" {
+			body.SetAttributeValue("wiki_access_level", cty.StringVal(string(g.WikiAccessLevel)))
+		}
+		if g.IPRestrictionRanges != "" {
+			body.SetAttributeValue("ip_restriction_ranges", cty.StringVal(g.IPRestrictionRanges))
+		}
+
+		// Nested block: default_branch_protection_defaults
+		if g.DefaultBranchProtectionDefaults != nil {
+			dbpd := g.DefaultBranchProtectionDefaults
+			dbpdBlock := body.AppendNewBlock("default_branch_protection_defaults", nil)
+			dbpdBody := dbpdBlock.Body()
+
+			if len(dbpd.AllowedToPush) > 0 {
+				levels := make([]cty.Value, len(dbpd.AllowedToPush))
+				for i, al := range dbpd.AllowedToPush {
+					if al.AccessLevel != nil {
+						levels[i] = cty.NumberIntVal(int64(*al.AccessLevel))
+					}
+				}
+				dbpdBody.SetAttributeValue("allowed_to_push", cty.ListVal(levels))
+			}
+			if len(dbpd.AllowedToMerge) > 0 {
+				levels := make([]cty.Value, len(dbpd.AllowedToMerge))
+				for i, al := range dbpd.AllowedToMerge {
+					if al.AccessLevel != nil {
+						levels[i] = cty.NumberIntVal(int64(*al.AccessLevel))
+					}
+				}
+				dbpdBody.SetAttributeValue("allowed_to_merge", cty.ListVal(levels))
+			}
+			if dbpd.AllowForcePush {
+				dbpdBody.SetAttributeValue("allow_force_push", cty.BoolVal(dbpd.AllowForcePush))
+			}
+			if dbpd.DeveloperCanInitialPush {
+				dbpdBody.SetAttributeValue("developer_can_initial_push", cty.BoolVal(dbpd.DeveloperCanInitialPush))
+			}
+		}
+
+		rootBody.AppendNewline()
+	}
+
+	_, err := w.Write(f.Bytes())
+	return err
+}
