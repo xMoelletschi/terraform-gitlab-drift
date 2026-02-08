@@ -28,7 +28,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.Description != "" {
 			body.SetAttributeValue("description", cty.StringVal(p.Description))
 		}
-		if p.Visibility != gl.PrivateVisibility {
+		if p.Visibility != gl.PublicVisibility {
 			body.SetAttributeValue("visibility_level", cty.StringVal(string(p.Visibility)))
 		}
 		if p.ContainerRegistryAccessLevel != gl.EnabledAccessControl {
@@ -55,7 +55,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.SnippetsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("snippets_access_level", cty.StringVal(string(p.SnippetsAccessLevel)))
 		}
-		if p.PagesAccessLevel != gl.EnabledAccessControl {
+		if p.PagesAccessLevel != gl.PrivateAccessControl {
 			body.SetAttributeValue("pages_access_level", cty.StringVal(string(p.PagesAccessLevel)))
 		}
 		if p.ReleasesAccessLevel != gl.EnabledAccessControl {
@@ -64,7 +64,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.AnalyticsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("analytics_access_level", cty.StringVal(string(p.AnalyticsAccessLevel)))
 		}
-		if p.OperationsAccessLevel != gl.EnabledAccessControl {
+		if p.OperationsAccessLevel != "" {
 			body.SetAttributeValue("operations_access_level", cty.StringVal(string(p.OperationsAccessLevel)))
 		}
 		if p.EnvironmentsAccessLevel != gl.EnabledAccessControl {
@@ -82,7 +82,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.RequirementsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("requirements_access_level", cty.StringVal(string(p.RequirementsAccessLevel)))
 		}
-		if p.SecurityAndComplianceAccessLevel != gl.EnabledAccessControl {
+		if p.SecurityAndComplianceAccessLevel != gl.PrivateAccessControl {
 			body.SetAttributeValue("security_and_compliance_access_level", cty.StringVal(string(p.SecurityAndComplianceAccessLevel)))
 		}
 		if p.ModelExperimentsAccessLevel != gl.EnabledAccessControl {
@@ -144,16 +144,28 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 			body.SetAttributeValue("ci_delete_pipelines_in_seconds", cty.NumberIntVal(p.CIDeletePipelinesInSeconds))
 		}
 		if len(p.CIIdTokenSubClaimComponents) > 0 {
-			components := make([]cty.Value, len(p.CIIdTokenSubClaimComponents))
-			for i, c := range p.CIIdTokenSubClaimComponents {
-				components[i] = cty.StringVal(c)
+			defaultComponents := []string{"project_path", "ref_type", "ref"}
+			isDefault := len(p.CIIdTokenSubClaimComponents) == len(defaultComponents)
+			if isDefault {
+				for i, c := range defaultComponents {
+					if p.CIIdTokenSubClaimComponents[i] != c {
+						isDefault = false
+						break
+					}
+				}
 			}
-			body.SetAttributeValue("ci_id_token_sub_claim_components", cty.ListVal(components))
+			if !isDefault {
+				components := make([]cty.Value, len(p.CIIdTokenSubClaimComponents))
+				for i, c := range p.CIIdTokenSubClaimComponents {
+					components[i] = cty.StringVal(c)
+				}
+				body.SetAttributeValue("ci_id_token_sub_claim_components", cty.ListVal(components))
+			}
 		}
 		if p.CIRestrictPipelineCancellationRole != "" {
 			body.SetAttributeValue("ci_restrict_pipeline_cancellation_role", cty.StringVal(string(p.CIRestrictPipelineCancellationRole)))
 		}
-		if p.CIPipelineVariablesMinimumOverrideRole != "" {
+		if p.CIPipelineVariablesMinimumOverrideRole != gl.CIPipelineVariablesDeveloperRole {
 			body.SetAttributeValue("ci_pipeline_variables_minimum_override_role", cty.StringVal(p.CIPipelineVariablesMinimumOverrideRole))
 		}
 		if p.RepositoryStorage != "" {
@@ -177,7 +189,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if !p.PackagesEnabled {
 			body.SetAttributeValue("packages_enabled", cty.BoolVal(p.PackagesEnabled))
 		}
-		if p.ServiceDeskEnabled {
+		if !p.ServiceDeskEnabled {
 			body.SetAttributeValue("service_desk_enabled", cty.BoolVal(p.ServiceDeskEnabled))
 		}
 		if !p.LFSEnabled {
@@ -213,7 +225,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.MirrorOverwritesDivergedBranches {
 			body.SetAttributeValue("mirror_overwrites_diverged_branches", cty.BoolVal(p.MirrorOverwritesDivergedBranches))
 		}
-		if p.ResourceGroupDefaultProcessMode != gl.OldestFirst {
+		if p.ResourceGroupDefaultProcessMode != gl.Unordered {
 			body.SetAttributeValue("resource_group_default_process_mode", cty.StringVal(string(p.ResourceGroupDefaultProcessMode)))
 		}
 		if !p.KeepLatestArtifact {
@@ -264,7 +276,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.OnlyAllowMergeIfAllDiscussionsAreResolved {
 			body.SetAttributeValue("only_allow_merge_if_all_discussions_are_resolved", cty.BoolVal(p.OnlyAllowMergeIfAllDiscussionsAreResolved))
 		}
-		if p.RemoveSourceBranchAfterMerge {
+		if !p.RemoveSourceBranchAfterMerge {
 			body.SetAttributeValue("remove_source_branch_after_merge", cty.BoolVal(p.RemoveSourceBranchAfterMerge))
 		}
 		if p.ResolveOutdatedDiffDiscussions {

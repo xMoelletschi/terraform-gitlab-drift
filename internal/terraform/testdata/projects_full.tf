@@ -12,7 +12,7 @@ resource "gitlab_project" "full_project" {
   wiki_access_level                                = "disabled"
   builds_access_level                              = "private"
   snippets_access_level                            = "disabled"
-  pages_access_level                               = "private"
+  pages_access_level                               = "public"
   releases_access_level                            = "private"
   analytics_access_level                           = "private"
   operations_access_level                          = "private"
@@ -21,7 +21,7 @@ resource "gitlab_project" "full_project" {
   infrastructure_access_level                      = "private"
   monitor_access_level                             = "private"
   requirements_access_level                        = "private"
-  security_and_compliance_access_level             = "private"
+  security_and_compliance_access_level             = "disabled"
   model_experiments_access_level                   = "private"
   model_registry_access_level                      = "private"
   default_branch                                   = "main"
@@ -42,7 +42,7 @@ resource "gitlab_project" "full_project" {
   ci_delete_pipelines_in_seconds                   = 3600
   ci_id_token_sub_claim_components                 = ["project_path", "ref_type"]
   ci_restrict_pipeline_cancellation_role           = "private"
-  ci_pipeline_variables_minimum_override_role      = "developer"
+  ci_pipeline_variables_minimum_override_role      = "maintainer"
   repository_storage                               = "default"
   import_url                                       = "https://example.com/full.git"
   external_authorization_classification_label      = "secret"
@@ -50,6 +50,7 @@ resource "gitlab_project" "full_project" {
   shared_runners_enabled                           = false
   group_runners_enabled                            = false
   packages_enabled                                 = false
+  service_desk_enabled                             = false
   lfs_enabled                                      = false
   request_access_enabled                           = false
   autoclose_referenced_issues                      = false
@@ -78,7 +79,7 @@ resource "gitlab_project" "full_project" {
   allow_merge_on_skipped_pipeline                  = true
   only_allow_merge_if_pipeline_succeeds            = true
   only_allow_merge_if_all_discussions_are_resolved = true
-  remove_source_branch_after_merge                 = true
+  remove_source_branch_after_merge                 = false
   resolve_outdated_diff_discussions                = true
   auto_devops_enabled                              = true
   emails_enabled                                   = false
