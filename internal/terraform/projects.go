@@ -14,7 +14,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 
-	for _, p := range projects {
+	for i, p := range projects {
 		// Build resource name: parent group + project path
 		resourceName := normalizeToTerraformName(p.Path)
 		if p.Namespace != nil && p.Namespace.FullPath != "" {
@@ -306,7 +306,9 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 			}
 		}
 
-		rootBody.AppendNewline()
+		if i < len(projects)-1 {
+			rootBody.AppendNewline()
+		}
 	}
 
 	_, err := w.Write(f.Bytes())
