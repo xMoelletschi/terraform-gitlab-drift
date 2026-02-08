@@ -56,7 +56,19 @@ func TestNormalizeToTerraformName(t *testing.T) {
 func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 	resources := &gitlab.Resources{
 		Groups: []*gl.Group{
-			{Name: "xdeveloperic", Path: "xdeveloperic"},
+			{
+				ID:       10,
+				Name:     "xdeveloperic",
+				Path:     "xdeveloperic",
+				FullPath: "xdeveloperic",
+			},
+			{
+				ID:       20,
+				Name:     "Sub Group",
+				Path:     "sub-group",
+				FullPath: "xdeveloperic/sub-group",
+				ParentID: 10,
+			},
 		},
 		Projects: []*gl.Project{
 			{
@@ -94,9 +106,9 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 		t.Fatalf("WriteAll error: %v", err)
 	}
 
-	// gitlab_groups.tf must exist.
-	if _, err := os.Stat(filepath.Join(dir, "gitlab_groups.tf")); err != nil {
-		t.Fatalf("expected gitlab_groups.tf to exist: %v", err)
+	// gitlab_groups.tf must NOT exist anymore (groups are in namespace files now).
+	if _, err := os.Stat(filepath.Join(dir, "gitlab_groups.tf")); err == nil {
+		t.Fatal("expected gitlab_groups.tf to NOT exist, but it does")
 	}
 
 	// One file per namespace.
@@ -112,12 +124,15 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 		t.Fatal("expected gitlab_projects.tf to NOT exist, but it does")
 	}
 
-	// Verify content: xdeveloperic.tf should contain both projects A and B with new naming.
+	// Verify content: xdeveloperic.tf should contain the group + projects A and B.
 	data, err := os.ReadFile(filepath.Join(dir, "xdeveloperic.tf"))
 	if err != nil {
 		t.Fatalf("reading xdeveloperic.tf: %v", err)
 	}
 	content := string(data)
+	if !strings.Contains(content, `gitlab_group" "xdeveloperic"`) {
+		t.Error("xdeveloperic.tf should contain the xdeveloperic group")
+	}
 	if !strings.Contains(content, `"xdeveloperic_project_a"`) {
 		t.Error("xdeveloperic.tf should contain xdeveloperic_project_a")
 	}
@@ -128,13 +143,25 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 		t.Error("xdeveloperic.tf should NOT contain sub_group_project_c")
 	}
 
-	// Verify content: sub_group.tf should contain project C only with new naming.
+	// Verify content: sub_group.tf should contain the group + project C.
 	data, err = os.ReadFile(filepath.Join(dir, "sub_group.tf"))
 	if err != nil {
 		t.Fatalf("reading sub_group.tf: %v", err)
 	}
 	content = string(data)
+	if !strings.Contains(content, `gitlab_group" "sub_group"`) {
+		t.Error("sub_group.tf should contain the sub_group group")
+	}
+	if !strings.Contains(content, `parent_id`) {
+		t.Error("sub_group.tf should contain parent_id reference")
+	}
 	if !strings.Contains(content, `"sub_group_project_c"`) {
 		t.Error("sub_group.tf should contain sub_group_project_c")
+	}
+	// Verify group is before projects (group should appear first in file)
+	groupIdx := strings.Index(content, `gitlab_group" "sub_group"`)
+	projectIdx := strings.Index(content, `gitlab_project" "sub_group_project_c"`)
+	if groupIdx == -1 || projectIdx == -1 || groupIdx > projectIdx {
+		t.Error("sub_group.tf: group should appear before projects")
 	}
 }

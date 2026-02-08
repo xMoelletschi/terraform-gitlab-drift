@@ -25,11 +25,11 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string) error {
 
 	groupRefs := buildGroupRefMap(resources.Groups)
 
-	// Write all groups into a single file.
-	if err := writeFile(filepath.Join(dir, "gitlab_groups.tf"), func(w io.Writer) error {
-		return WriteGroups(resources.Groups, w, groupRefs)
-	}); err != nil {
-		errs = append(errs, fmt.Errorf("gitlab_groups.tf: %w", err))
+	groupsByPath := make(map[string]*gl.Group)
+	for _, g := range resources.Groups {
+		if g != nil && g.FullPath != "" {
+			groupsByPath[g.FullPath] = g
+		}
 	}
 
 	// Group projects by namespace full path.
@@ -42,9 +42,21 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string) error {
 		byNamespace[ns] = append(byNamespace[ns], p)
 	}
 
-	// Write one file per namespace.
-	for ns, projects := range byNamespace {
-		// Strip main group prefix from namespace for filename
+	// Collect all unique namespaces
+	allNamespaces := make(map[string]bool)
+	for ns := range byNamespace {
+		if ns != "" {
+			allNamespaces[ns] = true
+		}
+	}
+	for _, g := range resources.Groups {
+		if g != nil && g.FullPath != "" {
+			allNamespaces[g.FullPath] = true
+		}
+	}
+
+	// Write one file per namespace with group at the top, followed by projects
+	for ns := range allNamespaces {
 		trimmedNs := strings.TrimPrefix(ns, mainGroup+"/")
 		if trimmedNs == mainGroup {
 			// If ns equals mainGroup exactly, keep it as-is
@@ -52,11 +64,20 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string) error {
 		}
 
 		filename := normalizeToTerraformName(trimmedNs) + ".tf"
-		if ns == "" {
-			filename = "gitlab_projects.tf"
-		}
 		if err := writeFile(filepath.Join(dir, filename), func(w io.Writer) error {
-			return WriteProjects(projects, w, groupRefs)
+			if group, ok := groupsByPath[ns]; ok {
+				if err := WriteGroups([]*gl.Group{group}, w, groupRefs); err != nil {
+					return err
+				}
+			}
+
+			if projects := byNamespace[ns]; len(projects) > 0 {
+				if err := WriteProjects(projects, w, groupRefs); err != nil {
+					return err
+				}
+			}
+
+			return nil
 		}); err != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", filename, err))
 		}
