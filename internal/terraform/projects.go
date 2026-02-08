@@ -281,6 +281,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 		}
 
 		if p.ContainerExpirationPolicy != nil && p.ContainerExpirationPolicy.Enabled {
+			body.AppendNewline()
 			cep := p.ContainerExpirationPolicy
 			cepBlock := body.AppendNewBlock("container_expiration_policy", nil)
 			cepBody := cepBlock.Body()

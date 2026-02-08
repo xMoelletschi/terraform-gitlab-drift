@@ -82,6 +82,7 @@ func WriteGroups(groups []*gl.Group, w io.Writer, groupRefs groupRefMap) error {
 
 		// Nested block: default_branch_protection_defaults
 		if g.DefaultBranchProtectionDefaults != nil {
+			body.AppendNewline()
 			dbpd := g.DefaultBranchProtectionDefaults
 			dbpdBlock := body.AppendNewBlock("default_branch_protection_defaults", nil)
 			dbpdBody := dbpdBlock.Body()
