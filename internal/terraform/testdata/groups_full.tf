@@ -1,9 +1,14 @@
+resource "gitlab_group" "parent_group" {
+  name = "Parent Group"
+  path = "parent-group"
+}
+
 resource "gitlab_group" "full_group" {
   name                              = "Full Group"
   path                              = "full-group"
   description                       = "Full group description"
   visibility_level                  = "private"
-  parent_id                         = 42
+  parent_id                         = gitlab_group.parent_group.id
   lfs_enabled                       = true
   request_access_enabled            = true
   membership_lock                   = true

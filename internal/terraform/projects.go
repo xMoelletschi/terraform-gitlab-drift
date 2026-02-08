@@ -9,7 +9,7 @@ import (
 )
 
 // WriteProjects writes GitLab projects as Terraform HCL resources.
-func WriteProjects(projects []*gl.Project, w io.Writer) error {
+func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) error {
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 
@@ -21,7 +21,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		body.SetAttributeValue("name", cty.StringVal(p.Name))
 		body.SetAttributeValue("path", cty.StringVal(p.Path))
 		if p.Namespace != nil && p.Namespace.ID != 0 {
-			body.SetAttributeValue("namespace_id", cty.NumberIntVal(p.Namespace.ID))
+			setGroupIDAttribute(body, "namespace_id", p.Namespace.ID, groupRefs)
 		}
 
 		// Optional - only set if non-default

@@ -17,7 +17,7 @@ func TestWriteGroupsDefaultsOmitted(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := WriteGroups(groups, &buf); err != nil {
+	if err := WriteGroups(groups, &buf, buildGroupRefMap(groups)); err != nil {
 		t.Fatalf("WriteGroups error: %v", err)
 	}
 
@@ -28,6 +28,13 @@ func TestWriteGroupsAllOptions(t *testing.T) {
 	level := gl.MaintainerPermissions
 	groups := []*gl.Group{
 		{
+			ID:            42,
+			Name:          "Parent Group",
+			Path:          "parent-group",
+			EmailsEnabled: true,
+		},
+		{
+			ID:                         100,
 			Name:                       "Full Group",
 			Path:                       "full-group",
 			Description:                "Full group description",
@@ -63,7 +70,7 @@ func TestWriteGroupsAllOptions(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := WriteGroups(groups, &buf); err != nil {
+	if err := WriteGroups(groups, &buf, buildGroupRefMap(groups)); err != nil {
 		t.Fatalf("WriteGroups error: %v", err)
 	}
 
