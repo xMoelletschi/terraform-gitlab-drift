@@ -81,7 +81,7 @@ func WriteGroups(groups []*gl.Group, w io.Writer, groupRefs groupRefMap) error {
 		}
 
 		// Nested block: default_branch_protection_defaults
-		if g.DefaultBranchProtectionDefaults != nil {
+		if !isDefaultBranchProtection(g.DefaultBranchProtectionDefaults) {
 			body.AppendNewline()
 			dbpd := g.DefaultBranchProtectionDefaults
 			dbpdBlock := body.AppendNewBlock("default_branch_protection_defaults", nil)
@@ -120,4 +120,35 @@ func WriteGroups(groups []*gl.Group, w io.Writer, groupRefs groupRefMap) error {
 
 	_, err := w.Write(f.Bytes())
 	return err
+}
+
+// isDefaultBranchProtection checks if the branch protection settings are the GitLab defaults.
+// Defaults: allowed_to_push=[40], allowed_to_merge=[40], allow_force_push=false, developer_can_initial_push=false
+func isDefaultBranchProtection(dbpd *gl.BranchProtectionDefaults) bool {
+	if dbpd == nil {
+		return true
+	}
+
+	if len(dbpd.AllowedToPush) != 1 {
+		return false
+	}
+	if dbpd.AllowedToPush[0].AccessLevel == nil || *dbpd.AllowedToPush[0].AccessLevel != gl.MaintainerPermissions {
+		return false
+	}
+
+	if len(dbpd.AllowedToMerge) != 1 {
+		return false
+	}
+	if dbpd.AllowedToMerge[0].AccessLevel == nil || *dbpd.AllowedToMerge[0].AccessLevel != gl.MaintainerPermissions {
+		return false
+	}
+
+	if dbpd.AllowForcePush {
+		return false
+	}
+	if dbpd.DeveloperCanInitialPush {
+		return false
+	}
+
+	return true
 }
