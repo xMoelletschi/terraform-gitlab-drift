@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
+	"github.com/xMoelletschi/terraform-gitlab-drift/internal/terraform"
 )
 
 var createMR bool
@@ -60,13 +61,12 @@ func runScan(cmd *cobra.Command, args []string) error {
 		"groups", len(resources.Groups),
 		"projects", len(resources.Projects),
 	)
-	// parse files
-	// check if its in the files
-	// TODO:
-	// Write to Terraform files
-	// Compare and find unmanaged resources
-	// Output results
-	// Optionally create MR
+
+	if err := terraform.WriteAll(resources, terraformDir); err != nil {
+		return fmt.Errorf("writing terraform files: %w", err)
+	}
+
+	slog.Info("wrote terraform files", "dir", terraformDir)
 
 	return nil
 }
