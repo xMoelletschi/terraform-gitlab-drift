@@ -9,14 +9,11 @@ resource "gitlab_group" "full_group" {
   description                                      = "Full group description"
   visibility_level                                 = "private"
   parent_id                                        = gitlab_group.parent_group.id
-  lfs_enabled                                      = true
-  request_access_enabled                           = true
   membership_lock                                  = true
   share_with_group_lock                            = true
   require_two_factor_authentication                = true
   two_factor_grace_period                          = 7
   project_creation_level                           = "owner"
-  subgroup_creation_level                          = "maintainer"
   auto_devops_enabled                              = true
   emails_enabled                                   = false
   mentions_disabled                                = true
