@@ -98,6 +98,6 @@ func writeFile(path string, writeFn func(io.Writer) error) error {
 	if err != nil {
 		return fmt.Errorf("creating file: %w", err)
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 	return writeFn(f)
 }
