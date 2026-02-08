@@ -9,7 +9,7 @@ import (
 )
 
 // WriteGroups writes GitLab groups as Terraform HCL resources.
-func WriteGroups(groups []*gl.Group, w io.Writer) error {
+func WriteGroups(groups []*gl.Group, w io.Writer, groupRefs groupRefMap) error {
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 
@@ -29,7 +29,7 @@ func WriteGroups(groups []*gl.Group, w io.Writer) error {
 			body.SetAttributeValue("visibility_level", cty.StringVal(string(g.Visibility)))
 		}
 		if g.ParentID != 0 {
-			body.SetAttributeValue("parent_id", cty.NumberIntVal(int64(g.ParentID)))
+			setGroupIDAttribute(body, "parent_id", g.ParentID, groupRefs)
 		}
 		if g.LFSEnabled {
 			body.SetAttributeValue("lfs_enabled", cty.BoolVal(g.LFSEnabled))

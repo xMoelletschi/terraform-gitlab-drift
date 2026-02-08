@@ -66,8 +66,12 @@ func TestWriteProjectsDefaultsOmitted(t *testing.T) {
 		},
 	}
 
+	groupRefs := buildGroupRefMap([]*gl.Group{
+		{ID: 7, Path: "my-group"},
+	})
+
 	var buf bytes.Buffer
-	if err := WriteProjects(projects, &buf); err != nil {
+	if err := WriteProjects(projects, &buf, groupRefs); err != nil {
 		t.Fatalf("WriteProjects error: %v", err)
 	}
 
@@ -173,8 +177,12 @@ func TestWriteProjectsAllOptions(t *testing.T) {
 		},
 	}
 
+	groupRefs := buildGroupRefMap([]*gl.Group{
+		{ID: 123, Path: "full-group"},
+	})
+
 	var buf bytes.Buffer
-	if err := WriteProjects([]*gl.Project{full}, &buf); err != nil {
+	if err := WriteProjects([]*gl.Project{full}, &buf, groupRefs); err != nil {
 		t.Fatalf("WriteProjects error: %v", err)
 	}
 

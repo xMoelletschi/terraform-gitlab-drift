@@ -23,9 +23,11 @@ func normalizeToTerraformName(path string) string {
 func WriteAll(resources *gitlab.Resources, dir string) error {
 	var errs []error
 
+	groupRefs := buildGroupRefMap(resources.Groups)
+
 	// Write all groups into a single file.
 	if err := writeFile(filepath.Join(dir, "gitlab_groups.tf"), func(w io.Writer) error {
-		return WriteGroups(resources.Groups, w)
+		return WriteGroups(resources.Groups, w, groupRefs)
 	}); err != nil {
 		errs = append(errs, fmt.Errorf("gitlab_groups.tf: %w", err))
 	}
@@ -47,7 +49,7 @@ func WriteAll(resources *gitlab.Resources, dir string) error {
 			filename = "gitlab_projects.tf"
 		}
 		if err := writeFile(filepath.Join(dir, filename), func(w io.Writer) error {
-			return WriteProjects(projects, w)
+			return WriteProjects(projects, w, groupRefs)
 		}); err != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", filename, err))
 		}

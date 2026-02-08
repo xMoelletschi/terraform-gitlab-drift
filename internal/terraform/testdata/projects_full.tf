@@ -1,7 +1,7 @@
 resource "gitlab_project" "full_project" {
   name                                             = "Full Project"
   path                                             = "full-project"
-  namespace_id                                     = 123
+  namespace_id                                     = gitlab_group.full_group.id
   description                                      = "Full project description"
   visibility_level                                 = "internal"
   container_registry_access_level                  = "disabled"
