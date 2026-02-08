@@ -28,67 +28,67 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.Description != "" {
 			body.SetAttributeValue("description", cty.StringVal(p.Description))
 		}
-		if p.Visibility != "" {
+		if p.Visibility != gl.PrivateVisibility {
 			body.SetAttributeValue("visibility_level", cty.StringVal(string(p.Visibility)))
 		}
-		if p.ContainerRegistryAccessLevel != "" {
+		if p.ContainerRegistryAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("container_registry_access_level", cty.StringVal(string(p.ContainerRegistryAccessLevel)))
 		}
-		if p.IssuesAccessLevel != "" {
+		if p.IssuesAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("issues_access_level", cty.StringVal(string(p.IssuesAccessLevel)))
 		}
-		if p.RepositoryAccessLevel != "" {
+		if p.RepositoryAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("repository_access_level", cty.StringVal(string(p.RepositoryAccessLevel)))
 		}
-		if p.MergeRequestsAccessLevel != "" {
+		if p.MergeRequestsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("merge_requests_access_level", cty.StringVal(string(p.MergeRequestsAccessLevel)))
 		}
-		if p.ForkingAccessLevel != "" {
+		if p.ForkingAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("forking_access_level", cty.StringVal(string(p.ForkingAccessLevel)))
 		}
-		if p.WikiAccessLevel != "" {
+		if p.WikiAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("wiki_access_level", cty.StringVal(string(p.WikiAccessLevel)))
 		}
-		if p.BuildsAccessLevel != "" {
+		if p.BuildsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("builds_access_level", cty.StringVal(string(p.BuildsAccessLevel)))
 		}
-		if p.SnippetsAccessLevel != "" {
+		if p.SnippetsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("snippets_access_level", cty.StringVal(string(p.SnippetsAccessLevel)))
 		}
-		if p.PagesAccessLevel != "" {
+		if p.PagesAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("pages_access_level", cty.StringVal(string(p.PagesAccessLevel)))
 		}
-		if p.ReleasesAccessLevel != "" {
+		if p.ReleasesAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("releases_access_level", cty.StringVal(string(p.ReleasesAccessLevel)))
 		}
-		if p.AnalyticsAccessLevel != "" {
+		if p.AnalyticsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("analytics_access_level", cty.StringVal(string(p.AnalyticsAccessLevel)))
 		}
-		if p.OperationsAccessLevel != "" {
+		if p.OperationsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("operations_access_level", cty.StringVal(string(p.OperationsAccessLevel)))
 		}
-		if p.EnvironmentsAccessLevel != "" {
+		if p.EnvironmentsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("environments_access_level", cty.StringVal(string(p.EnvironmentsAccessLevel)))
 		}
-		if p.FeatureFlagsAccessLevel != "" {
+		if p.FeatureFlagsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("feature_flags_access_level", cty.StringVal(string(p.FeatureFlagsAccessLevel)))
 		}
-		if p.InfrastructureAccessLevel != "" {
+		if p.InfrastructureAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("infrastructure_access_level", cty.StringVal(string(p.InfrastructureAccessLevel)))
 		}
-		if p.MonitorAccessLevel != "" {
+		if p.MonitorAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("monitor_access_level", cty.StringVal(string(p.MonitorAccessLevel)))
 		}
-		if p.RequirementsAccessLevel != "" {
+		if p.RequirementsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("requirements_access_level", cty.StringVal(string(p.RequirementsAccessLevel)))
 		}
-		if p.SecurityAndComplianceAccessLevel != "" {
+		if p.SecurityAndComplianceAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("security_and_compliance_access_level", cty.StringVal(string(p.SecurityAndComplianceAccessLevel)))
 		}
-		if p.ModelExperimentsAccessLevel != "" {
+		if p.ModelExperimentsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("model_experiments_access_level", cty.StringVal(string(p.ModelExperimentsAccessLevel)))
 		}
-		if p.ModelRegistryAccessLevel != "" {
+		if p.ModelRegistryAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("model_registry_access_level", cty.StringVal(string(p.ModelRegistryAccessLevel)))
 		}
 		if p.DefaultBranch != "" {
@@ -101,10 +101,10 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 			}
 			body.SetAttributeValue("topics", cty.ListVal(topics))
 		}
-		if p.MergeMethod != "" {
+		if p.MergeMethod != gl.NoFastForwardMerge {
 			body.SetAttributeValue("merge_method", cty.StringVal(string(p.MergeMethod)))
 		}
-		if p.SquashOption != "" {
+		if p.SquashOption != gl.SquashOptionDefaultOff {
 			body.SetAttributeValue("squash_option", cty.StringVal(string(p.SquashOption)))
 		}
 		if p.MergeCommitTemplate != "" {
@@ -125,19 +125,19 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.MergeRequestsTemplate != "" {
 			body.SetAttributeValue("merge_requests_template", cty.StringVal(p.MergeRequestsTemplate))
 		}
-		if p.BuildGitStrategy != "" {
+		if p.BuildGitStrategy != "fetch" {
 			body.SetAttributeValue("build_git_strategy", cty.StringVal(p.BuildGitStrategy))
 		}
-		if p.AutoCancelPendingPipelines != "" {
+		if p.AutoCancelPendingPipelines != "enabled" {
 			body.SetAttributeValue("auto_cancel_pending_pipelines", cty.StringVal(p.AutoCancelPendingPipelines))
 		}
-		if p.AutoDevopsDeployStrategy != "" {
+		if p.AutoDevopsDeployStrategy != "continuous" {
 			body.SetAttributeValue("auto_devops_deploy_strategy", cty.StringVal(p.AutoDevopsDeployStrategy))
 		}
 		if p.CIConfigPath != "" {
 			body.SetAttributeValue("ci_config_path", cty.StringVal(p.CIConfigPath))
 		}
-		if p.CIDefaultGitDepth != 0 {
+		if p.CIDefaultGitDepth != 20 {
 			body.SetAttributeValue("ci_default_git_depth", cty.NumberIntVal(p.CIDefaultGitDepth))
 		}
 		if p.CIDeletePipelinesInSeconds != 0 {
@@ -165,7 +165,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.ExternalAuthorizationClassificationLabel != "" {
 			body.SetAttributeValue("external_authorization_classification_label", cty.StringVal(p.ExternalAuthorizationClassificationLabel))
 		}
-		if p.BuildTimeout != 0 {
+		if p.BuildTimeout != 3600 {
 			body.SetAttributeValue("build_timeout", cty.NumberIntVal(p.BuildTimeout))
 		}
 		if !p.SharedRunnersEnabled {
@@ -180,13 +180,13 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.ServiceDeskEnabled {
 			body.SetAttributeValue("service_desk_enabled", cty.BoolVal(p.ServiceDeskEnabled))
 		}
-		if p.LFSEnabled {
+		if !p.LFSEnabled {
 			body.SetAttributeValue("lfs_enabled", cty.BoolVal(p.LFSEnabled))
 		}
-		if p.RequestAccessEnabled {
+		if !p.RequestAccessEnabled {
 			body.SetAttributeValue("request_access_enabled", cty.BoolVal(p.RequestAccessEnabled))
 		}
-		if p.AutocloseReferencedIssues {
+		if !p.AutocloseReferencedIssues {
 			body.SetAttributeValue("autoclose_referenced_issues", cty.BoolVal(p.AutocloseReferencedIssues))
 		}
 		if p.MergePipelinesEnabled {
@@ -213,10 +213,10 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.MirrorOverwritesDivergedBranches {
 			body.SetAttributeValue("mirror_overwrites_diverged_branches", cty.BoolVal(p.MirrorOverwritesDivergedBranches))
 		}
-		if p.ResourceGroupDefaultProcessMode != "" {
+		if p.ResourceGroupDefaultProcessMode != gl.OldestFirst {
 			body.SetAttributeValue("resource_group_default_process_mode", cty.StringVal(string(p.ResourceGroupDefaultProcessMode)))
 		}
-		if p.KeepLatestArtifact {
+		if !p.KeepLatestArtifact {
 			body.SetAttributeValue("keep_latest_artifact", cty.BoolVal(p.KeepLatestArtifact))
 		}
 		if p.MaxArtifactsSize != 0 {
@@ -234,25 +234,25 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.AutoDuoCodeReviewEnabled {
 			body.SetAttributeValue("auto_duo_code_review_enabled", cty.BoolVal(p.AutoDuoCodeReviewEnabled))
 		}
-		if p.PrintingMergeRequestLinkEnabled {
+		if !p.PrintingMergeRequestLinkEnabled {
 			body.SetAttributeValue("printing_merge_request_link_enabled", cty.BoolVal(p.PrintingMergeRequestLinkEnabled))
 		}
-		if p.CIForwardDeploymentEnabled {
+		if !p.CIForwardDeploymentEnabled {
 			body.SetAttributeValue("ci_forward_deployment_enabled", cty.BoolVal(p.CIForwardDeploymentEnabled))
 		}
-		if p.CIForwardDeploymentRollbackAllowed {
+		if !p.CIForwardDeploymentRollbackAllowed {
 			body.SetAttributeValue("ci_forward_deployment_rollback_allowed", cty.BoolVal(p.CIForwardDeploymentRollbackAllowed))
 		}
 		if p.CIPushRepositoryForJobTokenAllowed {
 			body.SetAttributeValue("ci_push_repository_for_job_token_allowed", cty.BoolVal(p.CIPushRepositoryForJobTokenAllowed))
 		}
-		if p.CISeparatedCaches {
+		if !p.CISeparatedCaches {
 			body.SetAttributeValue("ci_separated_caches", cty.BoolVal(p.CISeparatedCaches))
 		}
-		if p.EnforceAuthChecksOnUploads {
+		if !p.EnforceAuthChecksOnUploads {
 			body.SetAttributeValue("enforce_auth_checks_on_uploads", cty.BoolVal(p.EnforceAuthChecksOnUploads))
 		}
-		if p.PublicJobs {
+		if !p.PublicJobs {
 			body.SetAttributeValue("public_jobs", cty.BoolVal(p.PublicJobs))
 		}
 		if p.AllowMergeOnSkippedPipeline {
@@ -293,8 +293,6 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 			}
 			if cep.NameRegexDelete != "" {
 				cepBody.SetAttributeValue("name_regex_delete", cty.StringVal(cep.NameRegexDelete))
-			} else if cep.NameRegex != "" {
-				cepBody.SetAttributeValue("name_regex_delete", cty.StringVal(cep.NameRegex))
 			}
 			if cep.NameRegexKeep != "" {
 				cepBody.SetAttributeValue("name_regex_keep", cty.StringVal(cep.NameRegexKeep))
