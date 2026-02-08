@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
+	gl "gitlab.com/gitlab-org/api/client-go"
 )
 
 func normalizeToTerraformName(path string) string {
@@ -20,20 +21,38 @@ func normalizeToTerraformName(path string) string {
 }
 
 func WriteAll(resources *gitlab.Resources, dir string) error {
-	writers := []struct {
-		filename string
-		writeFn  func(io.Writer) error
-	}{
-		{"gitlab_groups.tf", func(w io.Writer) error { return WriteGroups(resources.Groups, w) }},
-		{"gitlab_projects.tf", func(w io.Writer) error { return WriteProjects(resources.Projects, w) }},
+	var errs []error
+
+	// Write all groups into a single file.
+	if err := writeFile(filepath.Join(dir, "gitlab_groups.tf"), func(w io.Writer) error {
+		return WriteGroups(resources.Groups, w)
+	}); err != nil {
+		errs = append(errs, fmt.Errorf("gitlab_groups.tf: %w", err))
 	}
 
-	var errs []error
-	for _, wr := range writers {
-		if err := writeFile(filepath.Join(dir, wr.filename), wr.writeFn); err != nil {
-			errs = append(errs, fmt.Errorf("%s: %w", wr.filename, err))
+	// Group projects by namespace full path.
+	byNamespace := make(map[string][]*gl.Project)
+	for _, p := range resources.Projects {
+		ns := ""
+		if p.Namespace != nil {
+			ns = p.Namespace.FullPath
+		}
+		byNamespace[ns] = append(byNamespace[ns], p)
+	}
+
+	// Write one file per namespace.
+	for ns, projects := range byNamespace {
+		filename := normalizeToTerraformName(ns) + ".tf"
+		if ns == "" {
+			filename = "gitlab_projects.tf"
+		}
+		if err := writeFile(filepath.Join(dir, filename), func(w io.Writer) error {
+			return WriteProjects(projects, w)
+		}); err != nil {
+			errs = append(errs, fmt.Errorf("%s: %w", filename, err))
 		}
 	}
+
 	return errors.Join(errs...)
 }
 
