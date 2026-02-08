@@ -4,13 +4,17 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/terraform"
 )
 
-var createMR bool
+var (
+	createMR  bool
+	overwrite bool
+)
 
 var scanCmd = &cobra.Command{
 	Use:   "scan",
@@ -21,6 +25,7 @@ var scanCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(scanCmd)
 	scanCmd.Flags().BoolVar(&createMR, "create-mr", false, "[TODO:WIP] Create a merge request with generated Terraform code")
+	scanCmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite files in terraform directory (default: write to tmp/ subdirectory)")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -62,11 +67,19 @@ func runScan(cmd *cobra.Command, args []string) error {
 		"projects", len(resources.Projects),
 	)
 
-	if err := terraform.WriteAll(resources, terraformDir, gitlabGroup); err != nil {
+	outputDir := terraformDir
+	if !overwrite {
+		outputDir = filepath.Join(terraformDir, "tmp")
+		if err := os.MkdirAll(outputDir, 0755); err != nil {
+			return fmt.Errorf("creating tmp directory: %w", err)
+		}
+	}
+
+	if err := terraform.WriteAll(resources, outputDir, gitlabGroup); err != nil {
 		return fmt.Errorf("writing terraform files: %w", err)
 	}
 
-	slog.Info("wrote terraform files", "dir", terraformDir)
+	slog.Info("wrote terraform files", "dir", outputDir, "overwrite", overwrite)
 
 	return nil
 }
