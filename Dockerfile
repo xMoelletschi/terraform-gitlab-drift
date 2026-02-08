@@ -12,8 +12,6 @@ FROM alpine:3.23.3
 
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /app
+COPY --from=builder /build/terraform-gitlab-drift /usr/local/bin/terraform-gitlab-drift
 
-COPY --from=builder /build/terraform-gitlab-drift .
-
-ENTRYPOINT ["./terraform-gitlab-drift"]
+WORKDIR /workspace
