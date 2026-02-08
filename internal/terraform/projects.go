@@ -125,9 +125,6 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		if p.MergeRequestsTemplate != "" {
 			body.SetAttributeValue("merge_requests_template", cty.StringVal(p.MergeRequestsTemplate))
 		}
-		if p.BuildCoverageRegex != "" {
-			body.SetAttributeValue("build_coverage_regex", cty.StringVal(p.BuildCoverageRegex))
-		}
 		if p.BuildGitStrategy != "" {
 			body.SetAttributeValue("build_git_strategy", cty.StringVal(p.BuildGitStrategy))
 		}
@@ -170,21 +167,6 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 		}
 		if p.BuildTimeout != 0 {
 			body.SetAttributeValue("build_timeout", cty.NumberIntVal(p.BuildTimeout))
-		}
-		if !p.IssuesEnabled {
-			body.SetAttributeValue("issues_enabled", cty.BoolVal(p.IssuesEnabled))
-		}
-		if !p.MergeRequestsEnabled {
-			body.SetAttributeValue("merge_requests_enabled", cty.BoolVal(p.MergeRequestsEnabled))
-		}
-		if !p.WikiEnabled {
-			body.SetAttributeValue("wiki_enabled", cty.BoolVal(p.WikiEnabled))
-		}
-		if !p.SnippetsEnabled {
-			body.SetAttributeValue("snippets_enabled", cty.BoolVal(p.SnippetsEnabled))
-		}
-		if !p.ContainerRegistryEnabled {
-			body.SetAttributeValue("container_registry_enabled", cty.BoolVal(p.ContainerRegistryEnabled))
 		}
 		if !p.SharedRunnersEnabled {
 			body.SetAttributeValue("shared_runners_enabled", cty.BoolVal(p.SharedRunnersEnabled))

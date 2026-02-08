@@ -34,7 +34,6 @@ resource "gitlab_project" "full_project" {
   issue_branch_template                            = "issue-{{iid}}"
   issues_template                                  = "issues.md"
   merge_requests_template                          = "merge_requests.md"
-  build_coverage_regex                             = "cov"
   build_git_strategy                               = "clone"
   auto_cancel_pending_pipelines                    = "enabled"
   auto_devops_deploy_strategy                      = "continuous"
@@ -48,11 +47,6 @@ resource "gitlab_project" "full_project" {
   import_url                                       = "https://example.com/full.git"
   external_authorization_classification_label      = "secret"
   build_timeout                                    = 600
-  issues_enabled                                   = false
-  merge_requests_enabled                           = false
-  wiki_enabled                                     = false
-  snippets_enabled                                 = false
-  container_registry_enabled                       = false
   shared_runners_enabled                           = false
   group_runners_enabled                            = false
   packages_enabled                                 = false
@@ -99,18 +93,13 @@ resource "gitlab_project" "full_project" {
 }
 
 resource "gitlab_project" "legacy_policy" {
-  name                       = "Legacy Policy"
-  path                       = "legacy-policy"
-  namespace_id               = 321
-  issues_enabled             = false
-  merge_requests_enabled     = false
-  wiki_enabled               = false
-  snippets_enabled           = false
-  container_registry_enabled = false
-  shared_runners_enabled     = false
-  group_runners_enabled      = false
-  packages_enabled           = false
-  emails_enabled             = false
+  name                   = "Legacy Policy"
+  path                   = "legacy-policy"
+  namespace_id           = 321
+  shared_runners_enabled = false
+  group_runners_enabled  = false
+  packages_enabled       = false
+  emails_enabled         = false
   container_expiration_policy {
     cadence           = "2d"
     name_regex_delete = "legacy.*"
