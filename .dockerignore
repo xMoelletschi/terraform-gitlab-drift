@@ -1,0 +1,8 @@
+.git/
+.gitignore
+.github/
+.releaserc.json
+Dockerfile
+*.md
+*_test.go
+*.test
