@@ -25,6 +25,7 @@ resource "gitlab_group" "full_group" {
   default_branch                    = "main"
   wiki_access_level                 = "private"
   ip_restriction_ranges             = "10.0.0.0/24"
+
   default_branch_protection_defaults {
     allowed_to_push            = [40]
     allowed_to_merge           = [40]

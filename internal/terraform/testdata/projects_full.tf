@@ -77,6 +77,7 @@ resource "gitlab_project" "full_group_full_project" {
   resolve_outdated_diff_discussions                = true
   auto_devops_enabled                              = true
   emails_enabled                                   = false
+
   container_expiration_policy {
     cadence           = "1d"
     keep_n            = 5
@@ -86,3 +87,4 @@ resource "gitlab_project" "full_group_full_project" {
     enabled           = true
   }
 }
+
