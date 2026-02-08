@@ -15,7 +15,6 @@ resource "gitlab_project" "full_group_full_project" {
   pages_access_level                               = "public"
   releases_access_level                            = "private"
   analytics_access_level                           = "private"
-  operations_access_level                          = "private"
   environments_access_level                        = "private"
   feature_flags_access_level                       = "private"
   infrastructure_access_level                      = "private"
@@ -31,7 +30,6 @@ resource "gitlab_project" "full_group_full_project" {
   merge_commit_template                            = "merge {{title}}"
   squash_commit_template                           = "squash {{title}}"
   suggestion_commit_message                        = "suggest {{title}}"
-  issue_branch_template                            = "issue-{{iid}}"
   issues_template                                  = "issues.md"
   merge_requests_template                          = "merge_requests.md"
   build_git_strategy                               = "clone"
@@ -50,7 +48,6 @@ resource "gitlab_project" "full_group_full_project" {
   shared_runners_enabled                           = false
   group_runners_enabled                            = false
   packages_enabled                                 = false
-  service_desk_enabled                             = false
   lfs_enabled                                      = false
   request_access_enabled                           = false
   autoclose_referenced_issues                      = false
@@ -58,13 +55,11 @@ resource "gitlab_project" "full_group_full_project" {
   merge_trains_enabled                             = true
   merge_trains_skip_train_allowed                  = true
   mirror                                           = true
-  mirror_user_id                                   = 99
   mirror_trigger_builds                            = true
   only_mirror_protected_branches                   = true
   mirror_overwrites_diverged_branches              = true
   resource_group_default_process_mode              = "newest_first"
   keep_latest_artifact                             = false
-  max_artifacts_size                               = 123
   mr_default_target_self                           = true
   prevent_merge_without_jira_issue                 = true
   allow_pipeline_trigger_approve_deployment        = true
@@ -74,7 +69,6 @@ resource "gitlab_project" "full_group_full_project" {
   ci_forward_deployment_rollback_allowed           = false
   ci_push_repository_for_job_token_allowed         = true
   ci_separated_caches                              = false
-  enforce_auth_checks_on_uploads                   = false
   public_jobs                                      = false
   allow_merge_on_skipped_pipeline                  = true
   only_allow_merge_if_pipeline_succeeds            = true

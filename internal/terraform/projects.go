@@ -73,9 +73,6 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 		if p.AnalyticsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("analytics_access_level", cty.StringVal(string(p.AnalyticsAccessLevel)))
 		}
-		if p.OperationsAccessLevel != "" {
-			body.SetAttributeValue("operations_access_level", cty.StringVal(string(p.OperationsAccessLevel)))
-		}
 		if p.EnvironmentsAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("environments_access_level", cty.StringVal(string(p.EnvironmentsAccessLevel)))
 		}
@@ -124,9 +121,6 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 		}
 		if p.SuggestionCommitMessage != "" {
 			body.SetAttributeValue("suggestion_commit_message", cty.StringVal(p.SuggestionCommitMessage))
-		}
-		if p.IssueBranchTemplate != "" {
-			body.SetAttributeValue("issue_branch_template", cty.StringVal(p.IssueBranchTemplate))
 		}
 		if p.IssuesTemplate != "" {
 			body.SetAttributeValue("issues_template", cty.StringVal(p.IssuesTemplate))
@@ -198,9 +192,6 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 		if !p.PackagesEnabled {
 			body.SetAttributeValue("packages_enabled", cty.BoolVal(p.PackagesEnabled))
 		}
-		if !p.ServiceDeskEnabled {
-			body.SetAttributeValue("service_desk_enabled", cty.BoolVal(p.ServiceDeskEnabled))
-		}
 		if !p.LFSEnabled {
 			body.SetAttributeValue("lfs_enabled", cty.BoolVal(p.LFSEnabled))
 		}
@@ -222,9 +213,6 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 		if p.Mirror {
 			body.SetAttributeValue("mirror", cty.BoolVal(p.Mirror))
 		}
-		if p.MirrorUserID != 0 {
-			body.SetAttributeValue("mirror_user_id", cty.NumberIntVal(p.MirrorUserID))
-		}
 		if p.MirrorTriggerBuilds {
 			body.SetAttributeValue("mirror_trigger_builds", cty.BoolVal(p.MirrorTriggerBuilds))
 		}
@@ -239,9 +227,6 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 		}
 		if !p.KeepLatestArtifact {
 			body.SetAttributeValue("keep_latest_artifact", cty.BoolVal(p.KeepLatestArtifact))
-		}
-		if p.MaxArtifactsSize != 0 {
-			body.SetAttributeValue("max_artifacts_size", cty.NumberIntVal(p.MaxArtifactsSize))
 		}
 		if p.MergeRequestDefaultTargetSelf {
 			body.SetAttributeValue("mr_default_target_self", cty.BoolVal(p.MergeRequestDefaultTargetSelf))
@@ -269,9 +254,6 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 		}
 		if !p.CISeparatedCaches {
 			body.SetAttributeValue("ci_separated_caches", cty.BoolVal(p.CISeparatedCaches))
-		}
-		if !p.EnforceAuthChecksOnUploads {
-			body.SetAttributeValue("enforce_auth_checks_on_uploads", cty.BoolVal(p.EnforceAuthChecksOnUploads))
 		}
 		if !p.PublicJobs {
 			body.SetAttributeValue("public_jobs", cty.BoolVal(p.PublicJobs))
