@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	gl "gitlab.com/gitlab-org/api/client-go"
@@ -75,4 +76,34 @@ func TestWriteGroupsAllOptions(t *testing.T) {
 	}
 
 	compareGolden(t, "groups_full.tf", buf.String())
+}
+
+func TestWriteGroupsDefaultBranchProtectionOmitted(t *testing.T) {
+	level := gl.MaintainerPermissions
+	groups := []*gl.Group{
+		{
+			Name: "Group With Defaults",
+			Path: "group-with-defaults",
+			DefaultBranchProtectionDefaults: &gl.BranchProtectionDefaults{
+				AllowedToPush: []*gl.GroupAccessLevel{
+					{AccessLevel: &level}, // 40 = default
+				},
+				AllowedToMerge: []*gl.GroupAccessLevel{
+					{AccessLevel: &level}, // 40 = default
+				},
+				AllowForcePush:          false, // default
+				DeveloperCanInitialPush: false, // default
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := WriteGroups(groups, &buf, buildGroupRefMap(groups)); err != nil {
+		t.Fatalf("WriteGroups error: %v", err)
+	}
+
+	// Should not contain default_branch_protection_defaults block
+	if strings.Contains(buf.String(), "default_branch_protection_defaults") {
+		t.Error("default_branch_protection_defaults should be omitted when set to defaults")
+	}
 }
