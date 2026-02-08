@@ -49,11 +49,9 @@ func initLogger() {
 
 	opts := &slog.HandlerOptions{Level: level}
 
-	var handler slog.Handler
+	var handler slog.Handler = slog.NewTextHandler(os.Stderr, opts)
 	if jsonOutput {
 		handler = slog.NewJSONHandler(os.Stderr, opts)
-	} else {
-		handler = slog.NewTextHandler(os.Stderr, opts)
 	}
 
 	slog.SetDefault(slog.New(handler))
