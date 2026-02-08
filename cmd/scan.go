@@ -54,7 +54,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 	slog.Info("fetched resources",
 		"groups", len(resources.Groups),
 		"projects", len(resources.Projects),
-		"users", len(resources.Users),
 	)
 	// parse files
 	// check if its in the files
