@@ -54,9 +54,14 @@ func TestWriteGroupsAllOptions(t *testing.T) {
 			MentionsDisabled:           true,
 			PreventForkingOutsideGroup: true,
 			SharedRunnersSetting:       gl.DisabledAndOverridableSharedRunnersSettingValue,
-			DefaultBranch:              "main",
-			WikiAccessLevel:            gl.PrivateAccessControl,
-			IPRestrictionRanges:        "10.0.0.0/24",
+			DefaultBranch:                                 "main",
+			WikiAccessLevel:                               gl.PrivateAccessControl,
+			IPRestrictionRanges:                           "10.0.0.0/24",
+			MaxArtifactsSize:                              100,
+			RepositoryStorage:                             "default",
+			OnlyAllowMergeIfPipelineSucceeds:              true,
+			AllowMergeOnSkippedPipeline:                   true,
+			OnlyAllowMergeIfAllDiscussionsAreResolved:     true,
 			DefaultBranchProtectionDefaults: &gl.BranchProtectionDefaults{
 				AllowedToPush: []*gl.GroupAccessLevel{
 					{AccessLevel: &level},
