@@ -1,46 +1,24 @@
-PKG_LIST := $(shell go list ./...)
-GO_FILES := $(shell find . -name '*.go' | grep -v _test.go)
+.PHONY: build test lint fmt deps gotestsum test-update
 
-.PHONY: build
 build:
-	go build -race -o bin/terraform-gitlab-drift main.go
+	go build -race -o bin/terraform-gitlab-drift .
 
-.PHONY: run
-run: build
-	./bin/terraform-gitlab-drift
+test:
+	go test -v -race -count=1 ./...
 
-.PHONY: lint-test
-lint-test:
+lint:
 	golangci-lint run -v
 
-.PHONY: staticcheck-test
-staticcheck-test:
-	staticcheck ${PKG_LIST}
+fmt:
+	go fmt ./...
 
-.PHONY: fmt-test
-fmt-test:
-	go fmt ${PKG_LIST}
+deps:
+	go mod download
+	go mod tidy
+	go mod verify
 
-.PHONY: vet-test
-vet-test:
-	go vet ${PKG_LIST}
-
-.PHONY: unit-test
-unit-test:
-	go test -v ${PKG_LIST} -count=1 -timeout=10s
-
-.PHONY: race-test
-race-test:
-	go test -race -short ${PKG_LIST}  -count=1 -timeout=10s
-
-.PHONY: gosec-test
-gosec-test:
-	gosec ${PKG_LIST}
-
-.PHONY: benchmark-test
-benchmark-test:
-	go test -bench=. -benchmem ${PKG_LIST}
-
-.PHONY: gotestsum
 gotestsum:
 	gotestsum --watch -- --count=1 --timeout=5s
+
+test-update:
+	UPDATE_GOLDEN=1 go test -v -count=1 ./...
