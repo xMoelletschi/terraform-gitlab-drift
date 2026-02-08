@@ -20,7 +20,7 @@ var scanCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(scanCmd)
-	scanCmd.Flags().BoolVar(&createMR, "create-mr", false, "Create a merge request with generated Terraform code")
+	scanCmd.Flags().BoolVar(&createMR, "create-mr", false, "[TODO:WIP] Create a merge request with generated Terraform code")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
