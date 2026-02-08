@@ -20,7 +20,7 @@ func normalizeToTerraformName(path string) string {
 	return normalized
 }
 
-func WriteAll(resources *gitlab.Resources, dir string) error {
+func WriteAll(resources *gitlab.Resources, dir string, mainGroup string) error {
 	var errs []error
 
 	groupRefs := buildGroupRefMap(resources.Groups)
@@ -44,7 +44,14 @@ func WriteAll(resources *gitlab.Resources, dir string) error {
 
 	// Write one file per namespace.
 	for ns, projects := range byNamespace {
-		filename := normalizeToTerraformName(ns) + ".tf"
+		// Strip main group prefix from namespace for filename
+		trimmedNs := strings.TrimPrefix(ns, mainGroup+"/")
+		if trimmedNs == mainGroup {
+			// If ns equals mainGroup exactly, keep it as-is
+			trimmedNs = ns
+		}
+
+		filename := normalizeToTerraformName(trimmedNs) + ".tf"
 		if ns == "" {
 			filename = "gitlab_projects.tf"
 		}

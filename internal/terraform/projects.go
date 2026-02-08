@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"io"
+	"strings"
 
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
@@ -14,7 +15,15 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 	rootBody := f.Body()
 
 	for _, p := range projects {
-		block := rootBody.AppendNewBlock("resource", []string{"gitlab_project", normalizeToTerraformName(p.Path)})
+		// Build resource name: parent group + project path
+		resourceName := normalizeToTerraformName(p.Path)
+		if p.Namespace != nil && p.Namespace.FullPath != "" {
+			parts := strings.Split(p.Namespace.FullPath, "/")
+			parentGroup := parts[len(parts)-1]
+			resourceName = normalizeToTerraformName(parentGroup + "_" + p.Path)
+		}
+
+		block := rootBody.AppendNewBlock("resource", []string{"gitlab_project", resourceName})
 		body := block.Body()
 
 		// Required
