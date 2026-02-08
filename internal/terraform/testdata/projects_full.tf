@@ -3,27 +3,27 @@ resource "gitlab_project" "full_project" {
   path                                             = "full-project"
   namespace_id                                     = 123
   description                                      = "Full project description"
-  visibility_level                                 = "private"
-  container_registry_access_level                  = "enabled"
-  issues_access_level                              = "enabled"
-  repository_access_level                          = "enabled"
-  merge_requests_access_level                      = "enabled"
+  visibility_level                                 = "internal"
+  container_registry_access_level                  = "disabled"
+  issues_access_level                              = "disabled"
+  repository_access_level                          = "private"
+  merge_requests_access_level                      = "disabled"
   forking_access_level                             = "private"
-  wiki_access_level                                = "enabled"
-  builds_access_level                              = "enabled"
-  snippets_access_level                            = "enabled"
-  pages_access_level                               = "enabled"
-  releases_access_level                            = "enabled"
-  analytics_access_level                           = "enabled"
-  operations_access_level                          = "enabled"
-  environments_access_level                        = "enabled"
-  feature_flags_access_level                       = "enabled"
-  infrastructure_access_level                      = "enabled"
-  monitor_access_level                             = "enabled"
-  requirements_access_level                        = "enabled"
-  security_and_compliance_access_level             = "enabled"
-  model_experiments_access_level                   = "enabled"
-  model_registry_access_level                      = "enabled"
+  wiki_access_level                                = "disabled"
+  builds_access_level                              = "private"
+  snippets_access_level                            = "disabled"
+  pages_access_level                               = "private"
+  releases_access_level                            = "private"
+  analytics_access_level                           = "private"
+  operations_access_level                          = "private"
+  environments_access_level                        = "private"
+  feature_flags_access_level                       = "private"
+  infrastructure_access_level                      = "private"
+  monitor_access_level                             = "private"
+  requirements_access_level                        = "private"
+  security_and_compliance_access_level             = "private"
+  model_experiments_access_level                   = "private"
+  model_registry_access_level                      = "private"
   default_branch                                   = "main"
   topics                                           = ["topic-a", "topic-b"]
   merge_method                                     = "rebase_merge"
@@ -35,10 +35,10 @@ resource "gitlab_project" "full_project" {
   issues_template                                  = "issues.md"
   merge_requests_template                          = "merge_requests.md"
   build_git_strategy                               = "clone"
-  auto_cancel_pending_pipelines                    = "enabled"
-  auto_devops_deploy_strategy                      = "continuous"
+  auto_cancel_pending_pipelines                    = "disabled"
+  auto_devops_deploy_strategy                      = "timed_incremental"
   ci_config_path                                   = ".gitlab-ci.yml"
-  ci_default_git_depth                             = 20
+  ci_default_git_depth                             = 50
   ci_delete_pipelines_in_seconds                   = 3600
   ci_id_token_sub_claim_components                 = ["project_path", "ref_type"]
   ci_restrict_pipeline_cancellation_role           = "private"
@@ -50,9 +50,9 @@ resource "gitlab_project" "full_project" {
   shared_runners_enabled                           = false
   group_runners_enabled                            = false
   packages_enabled                                 = false
-  lfs_enabled                                      = true
-  request_access_enabled                           = true
-  autoclose_referenced_issues                      = true
+  lfs_enabled                                      = false
+  request_access_enabled                           = false
+  autoclose_referenced_issues                      = false
   merge_pipelines_enabled                          = true
   merge_trains_enabled                             = true
   merge_trains_skip_train_allowed                  = true
@@ -61,20 +61,20 @@ resource "gitlab_project" "full_project" {
   mirror_trigger_builds                            = true
   only_mirror_protected_branches                   = true
   mirror_overwrites_diverged_branches              = true
-  resource_group_default_process_mode              = "oldest_first"
-  keep_latest_artifact                             = true
+  resource_group_default_process_mode              = "newest_first"
+  keep_latest_artifact                             = false
   max_artifacts_size                               = 123
   mr_default_target_self                           = true
   prevent_merge_without_jira_issue                 = true
   allow_pipeline_trigger_approve_deployment        = true
   auto_duo_code_review_enabled                     = true
-  printing_merge_request_link_enabled              = true
-  ci_forward_deployment_enabled                    = true
-  ci_forward_deployment_rollback_allowed           = true
+  printing_merge_request_link_enabled              = false
+  ci_forward_deployment_enabled                    = false
+  ci_forward_deployment_rollback_allowed           = false
   ci_push_repository_for_job_token_allowed         = true
-  ci_separated_caches                              = true
-  enforce_auth_checks_on_uploads                   = true
-  public_jobs                                      = true
+  ci_separated_caches                              = false
+  enforce_auth_checks_on_uploads                   = false
+  public_jobs                                      = false
   allow_merge_on_skipped_pipeline                  = true
   only_allow_merge_if_pipeline_succeeds            = true
   only_allow_merge_if_all_discussions_are_resolved = true
@@ -88,21 +88,6 @@ resource "gitlab_project" "full_project" {
     older_than        = "7d"
     name_regex_delete = ".*"
     name_regex_keep   = "keep.*"
-    enabled           = true
-  }
-}
-
-resource "gitlab_project" "legacy_policy" {
-  name                   = "Legacy Policy"
-  path                   = "legacy-policy"
-  namespace_id           = 321
-  shared_runners_enabled = false
-  group_runners_enabled  = false
-  packages_enabled       = false
-  emails_enabled         = false
-  container_expiration_policy {
-    cadence           = "2d"
-    name_regex_delete = "legacy.*"
     enabled           = true
   }
 }
