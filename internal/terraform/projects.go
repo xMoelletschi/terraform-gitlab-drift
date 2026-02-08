@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/zclconf/go-cty/cty"
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
 
@@ -13,15 +14,315 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 	rootBody := f.Body()
 
 	for _, p := range projects {
-		// TODO: Implement similar to WriteGroups
-		// - Resource type: "gitlab_project"
-		// - Resource name: normalizeToTerraformName(p.Path)
-		// - Required: name, path
-		// - Optional: namespace_id, description, visibility_level, ...
-		// - Check gl.Project struct: go doc gitlab.com/gitlab-org/api/client-go.Project
-		// - Terraform docs: https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project
-		_ = p
-		_ = rootBody
+		block := rootBody.AppendNewBlock("resource", []string{"gitlab_project", normalizeToTerraformName(p.Path)})
+		body := block.Body()
+
+		// Required
+		body.SetAttributeValue("name", cty.StringVal(p.Name))
+		body.SetAttributeValue("path", cty.StringVal(p.Path))
+		if p.Namespace != nil && p.Namespace.ID != 0 {
+			body.SetAttributeValue("namespace_id", cty.NumberIntVal(p.Namespace.ID))
+		}
+
+		// Optional - only set if non-default
+		if p.Description != "" {
+			body.SetAttributeValue("description", cty.StringVal(p.Description))
+		}
+		if p.Visibility != "" {
+			body.SetAttributeValue("visibility_level", cty.StringVal(string(p.Visibility)))
+		}
+		if p.ContainerRegistryAccessLevel != "" {
+			body.SetAttributeValue("container_registry_access_level", cty.StringVal(string(p.ContainerRegistryAccessLevel)))
+		}
+		if p.IssuesAccessLevel != "" {
+			body.SetAttributeValue("issues_access_level", cty.StringVal(string(p.IssuesAccessLevel)))
+		}
+		if p.RepositoryAccessLevel != "" {
+			body.SetAttributeValue("repository_access_level", cty.StringVal(string(p.RepositoryAccessLevel)))
+		}
+		if p.MergeRequestsAccessLevel != "" {
+			body.SetAttributeValue("merge_requests_access_level", cty.StringVal(string(p.MergeRequestsAccessLevel)))
+		}
+		if p.ForkingAccessLevel != "" {
+			body.SetAttributeValue("forking_access_level", cty.StringVal(string(p.ForkingAccessLevel)))
+		}
+		if p.WikiAccessLevel != "" {
+			body.SetAttributeValue("wiki_access_level", cty.StringVal(string(p.WikiAccessLevel)))
+		}
+		if p.BuildsAccessLevel != "" {
+			body.SetAttributeValue("builds_access_level", cty.StringVal(string(p.BuildsAccessLevel)))
+		}
+		if p.SnippetsAccessLevel != "" {
+			body.SetAttributeValue("snippets_access_level", cty.StringVal(string(p.SnippetsAccessLevel)))
+		}
+		if p.PagesAccessLevel != "" {
+			body.SetAttributeValue("pages_access_level", cty.StringVal(string(p.PagesAccessLevel)))
+		}
+		if p.ReleasesAccessLevel != "" {
+			body.SetAttributeValue("releases_access_level", cty.StringVal(string(p.ReleasesAccessLevel)))
+		}
+		if p.AnalyticsAccessLevel != "" {
+			body.SetAttributeValue("analytics_access_level", cty.StringVal(string(p.AnalyticsAccessLevel)))
+		}
+		if p.OperationsAccessLevel != "" {
+			body.SetAttributeValue("operations_access_level", cty.StringVal(string(p.OperationsAccessLevel)))
+		}
+		if p.EnvironmentsAccessLevel != "" {
+			body.SetAttributeValue("environments_access_level", cty.StringVal(string(p.EnvironmentsAccessLevel)))
+		}
+		if p.FeatureFlagsAccessLevel != "" {
+			body.SetAttributeValue("feature_flags_access_level", cty.StringVal(string(p.FeatureFlagsAccessLevel)))
+		}
+		if p.InfrastructureAccessLevel != "" {
+			body.SetAttributeValue("infrastructure_access_level", cty.StringVal(string(p.InfrastructureAccessLevel)))
+		}
+		if p.MonitorAccessLevel != "" {
+			body.SetAttributeValue("monitor_access_level", cty.StringVal(string(p.MonitorAccessLevel)))
+		}
+		if p.RequirementsAccessLevel != "" {
+			body.SetAttributeValue("requirements_access_level", cty.StringVal(string(p.RequirementsAccessLevel)))
+		}
+		if p.SecurityAndComplianceAccessLevel != "" {
+			body.SetAttributeValue("security_and_compliance_access_level", cty.StringVal(string(p.SecurityAndComplianceAccessLevel)))
+		}
+		if p.ModelExperimentsAccessLevel != "" {
+			body.SetAttributeValue("model_experiments_access_level", cty.StringVal(string(p.ModelExperimentsAccessLevel)))
+		}
+		if p.ModelRegistryAccessLevel != "" {
+			body.SetAttributeValue("model_registry_access_level", cty.StringVal(string(p.ModelRegistryAccessLevel)))
+		}
+		if p.DefaultBranch != "" {
+			body.SetAttributeValue("default_branch", cty.StringVal(p.DefaultBranch))
+		}
+		if len(p.Topics) > 0 {
+			topics := make([]cty.Value, len(p.Topics))
+			for i, t := range p.Topics {
+				topics[i] = cty.StringVal(t)
+			}
+			body.SetAttributeValue("topics", cty.ListVal(topics))
+		}
+		if p.MergeMethod != "" {
+			body.SetAttributeValue("merge_method", cty.StringVal(string(p.MergeMethod)))
+		}
+		if p.SquashOption != "" {
+			body.SetAttributeValue("squash_option", cty.StringVal(string(p.SquashOption)))
+		}
+		if p.MergeCommitTemplate != "" {
+			body.SetAttributeValue("merge_commit_template", cty.StringVal(p.MergeCommitTemplate))
+		}
+		if p.SquashCommitTemplate != "" {
+			body.SetAttributeValue("squash_commit_template", cty.StringVal(p.SquashCommitTemplate))
+		}
+		if p.SuggestionCommitMessage != "" {
+			body.SetAttributeValue("suggestion_commit_message", cty.StringVal(p.SuggestionCommitMessage))
+		}
+		if p.IssueBranchTemplate != "" {
+			body.SetAttributeValue("issue_branch_template", cty.StringVal(p.IssueBranchTemplate))
+		}
+		if p.IssuesTemplate != "" {
+			body.SetAttributeValue("issues_template", cty.StringVal(p.IssuesTemplate))
+		}
+		if p.MergeRequestsTemplate != "" {
+			body.SetAttributeValue("merge_requests_template", cty.StringVal(p.MergeRequestsTemplate))
+		}
+		if p.BuildCoverageRegex != "" {
+			body.SetAttributeValue("build_coverage_regex", cty.StringVal(p.BuildCoverageRegex))
+		}
+		if p.BuildGitStrategy != "" {
+			body.SetAttributeValue("build_git_strategy", cty.StringVal(p.BuildGitStrategy))
+		}
+		if p.AutoCancelPendingPipelines != "" {
+			body.SetAttributeValue("auto_cancel_pending_pipelines", cty.StringVal(p.AutoCancelPendingPipelines))
+		}
+		if p.AutoDevopsDeployStrategy != "" {
+			body.SetAttributeValue("auto_devops_deploy_strategy", cty.StringVal(p.AutoDevopsDeployStrategy))
+		}
+		if p.CIConfigPath != "" {
+			body.SetAttributeValue("ci_config_path", cty.StringVal(p.CIConfigPath))
+		}
+		if p.CIDefaultGitDepth != 0 {
+			body.SetAttributeValue("ci_default_git_depth", cty.NumberIntVal(p.CIDefaultGitDepth))
+		}
+		if p.CIDeletePipelinesInSeconds != 0 {
+			body.SetAttributeValue("ci_delete_pipelines_in_seconds", cty.NumberIntVal(p.CIDeletePipelinesInSeconds))
+		}
+		if len(p.CIIdTokenSubClaimComponents) > 0 {
+			components := make([]cty.Value, len(p.CIIdTokenSubClaimComponents))
+			for i, c := range p.CIIdTokenSubClaimComponents {
+				components[i] = cty.StringVal(c)
+			}
+			body.SetAttributeValue("ci_id_token_sub_claim_components", cty.ListVal(components))
+		}
+		if p.CIRestrictPipelineCancellationRole != "" {
+			body.SetAttributeValue("ci_restrict_pipeline_cancellation_role", cty.StringVal(string(p.CIRestrictPipelineCancellationRole)))
+		}
+		if p.CIPipelineVariablesMinimumOverrideRole != "" {
+			body.SetAttributeValue("ci_pipeline_variables_minimum_override_role", cty.StringVal(p.CIPipelineVariablesMinimumOverrideRole))
+		}
+		if p.RepositoryStorage != "" {
+			body.SetAttributeValue("repository_storage", cty.StringVal(p.RepositoryStorage))
+		}
+		if p.ImportURL != "" {
+			body.SetAttributeValue("import_url", cty.StringVal(p.ImportURL))
+		}
+		if p.ExternalAuthorizationClassificationLabel != "" {
+			body.SetAttributeValue("external_authorization_classification_label", cty.StringVal(p.ExternalAuthorizationClassificationLabel))
+		}
+		if p.BuildTimeout != 0 {
+			body.SetAttributeValue("build_timeout", cty.NumberIntVal(p.BuildTimeout))
+		}
+		if !p.IssuesEnabled {
+			body.SetAttributeValue("issues_enabled", cty.BoolVal(p.IssuesEnabled))
+		}
+		if !p.MergeRequestsEnabled {
+			body.SetAttributeValue("merge_requests_enabled", cty.BoolVal(p.MergeRequestsEnabled))
+		}
+		if !p.WikiEnabled {
+			body.SetAttributeValue("wiki_enabled", cty.BoolVal(p.WikiEnabled))
+		}
+		if !p.SnippetsEnabled {
+			body.SetAttributeValue("snippets_enabled", cty.BoolVal(p.SnippetsEnabled))
+		}
+		if !p.ContainerRegistryEnabled {
+			body.SetAttributeValue("container_registry_enabled", cty.BoolVal(p.ContainerRegistryEnabled))
+		}
+		if !p.SharedRunnersEnabled {
+			body.SetAttributeValue("shared_runners_enabled", cty.BoolVal(p.SharedRunnersEnabled))
+		}
+		if !p.GroupRunnersEnabled {
+			body.SetAttributeValue("group_runners_enabled", cty.BoolVal(p.GroupRunnersEnabled))
+		}
+		if !p.PackagesEnabled {
+			body.SetAttributeValue("packages_enabled", cty.BoolVal(p.PackagesEnabled))
+		}
+		if p.ServiceDeskEnabled {
+			body.SetAttributeValue("service_desk_enabled", cty.BoolVal(p.ServiceDeskEnabled))
+		}
+		if p.LFSEnabled {
+			body.SetAttributeValue("lfs_enabled", cty.BoolVal(p.LFSEnabled))
+		}
+		if p.RequestAccessEnabled {
+			body.SetAttributeValue("request_access_enabled", cty.BoolVal(p.RequestAccessEnabled))
+		}
+		if p.AutocloseReferencedIssues {
+			body.SetAttributeValue("autoclose_referenced_issues", cty.BoolVal(p.AutocloseReferencedIssues))
+		}
+		if p.MergePipelinesEnabled {
+			body.SetAttributeValue("merge_pipelines_enabled", cty.BoolVal(p.MergePipelinesEnabled))
+		}
+		if p.MergeTrainsEnabled {
+			body.SetAttributeValue("merge_trains_enabled", cty.BoolVal(p.MergeTrainsEnabled))
+		}
+		if p.MergeTrainsSkipTrainAllowed {
+			body.SetAttributeValue("merge_trains_skip_train_allowed", cty.BoolVal(p.MergeTrainsSkipTrainAllowed))
+		}
+		if p.Mirror {
+			body.SetAttributeValue("mirror", cty.BoolVal(p.Mirror))
+		}
+		if p.MirrorUserID != 0 {
+			body.SetAttributeValue("mirror_user_id", cty.NumberIntVal(p.MirrorUserID))
+		}
+		if p.MirrorTriggerBuilds {
+			body.SetAttributeValue("mirror_trigger_builds", cty.BoolVal(p.MirrorTriggerBuilds))
+		}
+		if p.OnlyMirrorProtectedBranches {
+			body.SetAttributeValue("only_mirror_protected_branches", cty.BoolVal(p.OnlyMirrorProtectedBranches))
+		}
+		if p.MirrorOverwritesDivergedBranches {
+			body.SetAttributeValue("mirror_overwrites_diverged_branches", cty.BoolVal(p.MirrorOverwritesDivergedBranches))
+		}
+		if p.ResourceGroupDefaultProcessMode != "" {
+			body.SetAttributeValue("resource_group_default_process_mode", cty.StringVal(string(p.ResourceGroupDefaultProcessMode)))
+		}
+		if p.KeepLatestArtifact {
+			body.SetAttributeValue("keep_latest_artifact", cty.BoolVal(p.KeepLatestArtifact))
+		}
+		if p.MaxArtifactsSize != 0 {
+			body.SetAttributeValue("max_artifacts_size", cty.NumberIntVal(p.MaxArtifactsSize))
+		}
+		if p.MergeRequestDefaultTargetSelf {
+			body.SetAttributeValue("mr_default_target_self", cty.BoolVal(p.MergeRequestDefaultTargetSelf))
+		}
+		if p.PreventMergeWithoutJiraIssue {
+			body.SetAttributeValue("prevent_merge_without_jira_issue", cty.BoolVal(p.PreventMergeWithoutJiraIssue))
+		}
+		if p.AllowPipelineTriggerApproveDeployment {
+			body.SetAttributeValue("allow_pipeline_trigger_approve_deployment", cty.BoolVal(p.AllowPipelineTriggerApproveDeployment))
+		}
+		if p.AutoDuoCodeReviewEnabled {
+			body.SetAttributeValue("auto_duo_code_review_enabled", cty.BoolVal(p.AutoDuoCodeReviewEnabled))
+		}
+		if p.PrintingMergeRequestLinkEnabled {
+			body.SetAttributeValue("printing_merge_request_link_enabled", cty.BoolVal(p.PrintingMergeRequestLinkEnabled))
+		}
+		if p.CIForwardDeploymentEnabled {
+			body.SetAttributeValue("ci_forward_deployment_enabled", cty.BoolVal(p.CIForwardDeploymentEnabled))
+		}
+		if p.CIForwardDeploymentRollbackAllowed {
+			body.SetAttributeValue("ci_forward_deployment_rollback_allowed", cty.BoolVal(p.CIForwardDeploymentRollbackAllowed))
+		}
+		if p.CIPushRepositoryForJobTokenAllowed {
+			body.SetAttributeValue("ci_push_repository_for_job_token_allowed", cty.BoolVal(p.CIPushRepositoryForJobTokenAllowed))
+		}
+		if p.CISeparatedCaches {
+			body.SetAttributeValue("ci_separated_caches", cty.BoolVal(p.CISeparatedCaches))
+		}
+		if p.EnforceAuthChecksOnUploads {
+			body.SetAttributeValue("enforce_auth_checks_on_uploads", cty.BoolVal(p.EnforceAuthChecksOnUploads))
+		}
+		if p.PublicJobs {
+			body.SetAttributeValue("public_jobs", cty.BoolVal(p.PublicJobs))
+		}
+		if p.AllowMergeOnSkippedPipeline {
+			body.SetAttributeValue("allow_merge_on_skipped_pipeline", cty.BoolVal(p.AllowMergeOnSkippedPipeline))
+		}
+		if p.OnlyAllowMergeIfPipelineSucceeds {
+			body.SetAttributeValue("only_allow_merge_if_pipeline_succeeds", cty.BoolVal(p.OnlyAllowMergeIfPipelineSucceeds))
+		}
+		if p.OnlyAllowMergeIfAllDiscussionsAreResolved {
+			body.SetAttributeValue("only_allow_merge_if_all_discussions_are_resolved", cty.BoolVal(p.OnlyAllowMergeIfAllDiscussionsAreResolved))
+		}
+		if p.RemoveSourceBranchAfterMerge {
+			body.SetAttributeValue("remove_source_branch_after_merge", cty.BoolVal(p.RemoveSourceBranchAfterMerge))
+		}
+		if p.ResolveOutdatedDiffDiscussions {
+			body.SetAttributeValue("resolve_outdated_diff_discussions", cty.BoolVal(p.ResolveOutdatedDiffDiscussions))
+		}
+		if p.AutoDevopsEnabled {
+			body.SetAttributeValue("auto_devops_enabled", cty.BoolVal(p.AutoDevopsEnabled))
+		}
+		if !p.EmailsEnabled {
+			body.SetAttributeValue("emails_enabled", cty.BoolVal(p.EmailsEnabled))
+		}
+
+		if p.ContainerExpirationPolicy != nil {
+			cep := p.ContainerExpirationPolicy
+			cepBlock := body.AppendNewBlock("container_expiration_policy", nil)
+			cepBody := cepBlock.Body()
+
+			if cep.Cadence != "" {
+				cepBody.SetAttributeValue("cadence", cty.StringVal(cep.Cadence))
+			}
+			if cep.KeepN != 0 {
+				cepBody.SetAttributeValue("keep_n", cty.NumberIntVal(cep.KeepN))
+			}
+			if cep.OlderThan != "" {
+				cepBody.SetAttributeValue("older_than", cty.StringVal(cep.OlderThan))
+			}
+			if cep.NameRegexDelete != "" {
+				cepBody.SetAttributeValue("name_regex_delete", cty.StringVal(cep.NameRegexDelete))
+			} else if cep.NameRegex != "" {
+				cepBody.SetAttributeValue("name_regex_delete", cty.StringVal(cep.NameRegex))
+			}
+			if cep.NameRegexKeep != "" {
+				cepBody.SetAttributeValue("name_regex_keep", cty.StringVal(cep.NameRegexKeep))
+			}
+			if cep.Enabled {
+				cepBody.SetAttributeValue("enabled", cty.BoolVal(cep.Enabled))
+			}
+		}
+
+		rootBody.AppendNewline()
 	}
 
 	_, err := w.Write(f.Bytes())
