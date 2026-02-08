@@ -69,9 +69,6 @@ resource "gitlab_project" "full_group_full_project" {
   ci_forward_deployment_rollback_allowed           = false
   ci_push_repository_for_job_token_allowed         = true
   ci_separated_caches                              = false
-  ci_job_token_scope_enabled                       = true
-  ci_allow_fork_pipelines_to_run_in_parent_project = true
-  build_coverage_regex                             = "/Total.*?(\\d+\\.\\d+)%/"
   public_jobs                                      = false
   allow_merge_on_skipped_pipeline                  = true
   only_allow_merge_if_pipeline_succeeds            = true

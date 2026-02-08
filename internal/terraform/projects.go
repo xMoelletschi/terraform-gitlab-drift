@@ -255,15 +255,6 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 		if !p.CISeparatedCaches {
 			body.SetAttributeValue("ci_separated_caches", cty.BoolVal(p.CISeparatedCaches))
 		}
-		if p.CIJobTokenScopeEnabled {
-			body.SetAttributeValue("ci_job_token_scope_enabled", cty.BoolVal(p.CIJobTokenScopeEnabled))
-		}
-		if p.CIAllowForkPipelinesToRunInParentProject {
-			body.SetAttributeValue("ci_allow_fork_pipelines_to_run_in_parent_project", cty.BoolVal(p.CIAllowForkPipelinesToRunInParentProject))
-		}
-		if p.BuildCoverageRegex != "" {
-			body.SetAttributeValue("build_coverage_regex", cty.StringVal(p.BuildCoverageRegex))
-		}
 		if !p.PublicJobs {
 			body.SetAttributeValue("public_jobs", cty.BoolVal(p.PublicJobs))
 		}
