@@ -25,16 +25,16 @@ func WriteGroups(groups []*gl.Group, w io.Writer, groupRefs groupRefMap) error {
 		if g.Description != "" {
 			body.SetAttributeValue("description", cty.StringVal(g.Description))
 		}
-		if g.Visibility != "" {
+		if g.Visibility != gl.PublicVisibility {
 			body.SetAttributeValue("visibility_level", cty.StringVal(string(g.Visibility)))
 		}
 		if g.ParentID != 0 {
 			setGroupIDAttribute(body, "parent_id", g.ParentID, groupRefs)
 		}
-		if g.LFSEnabled {
+		if !g.LFSEnabled {
 			body.SetAttributeValue("lfs_enabled", cty.BoolVal(g.LFSEnabled))
 		}
-		if g.RequestAccessEnabled {
+		if !g.RequestAccessEnabled {
 			body.SetAttributeValue("request_access_enabled", cty.BoolVal(g.RequestAccessEnabled))
 		}
 		if g.MembershipLock {
@@ -46,13 +46,13 @@ func WriteGroups(groups []*gl.Group, w io.Writer, groupRefs groupRefMap) error {
 		if g.RequireTwoFactorAuth {
 			body.SetAttributeValue("require_two_factor_authentication", cty.BoolVal(g.RequireTwoFactorAuth))
 		}
-		if g.TwoFactorGracePeriod != 0 {
+		if g.TwoFactorGracePeriod != 48 {
 			body.SetAttributeValue("two_factor_grace_period", cty.NumberIntVal(g.TwoFactorGracePeriod))
 		}
-		if g.ProjectCreationLevel != "" {
+		if g.ProjectCreationLevel != gl.DeveloperProjectCreation {
 			body.SetAttributeValue("project_creation_level", cty.StringVal(string(g.ProjectCreationLevel)))
 		}
-		if g.SubGroupCreationLevel != "" {
+		if g.SubGroupCreationLevel != gl.MaintainerSubGroupCreationLevelValue {
 			body.SetAttributeValue("subgroup_creation_level", cty.StringVal(string(g.SubGroupCreationLevel)))
 		}
 		if g.AutoDevopsEnabled {
@@ -67,13 +67,13 @@ func WriteGroups(groups []*gl.Group, w io.Writer, groupRefs groupRefMap) error {
 		if g.PreventForkingOutsideGroup {
 			body.SetAttributeValue("prevent_forking_outside_group", cty.BoolVal(g.PreventForkingOutsideGroup))
 		}
-		if g.SharedRunnersSetting != "" {
+		if g.SharedRunnersSetting != gl.EnabledSharedRunnersSettingValue {
 			body.SetAttributeValue("shared_runners_setting", cty.StringVal(string(g.SharedRunnersSetting)))
 		}
 		if g.DefaultBranch != "" {
 			body.SetAttributeValue("default_branch", cty.StringVal(g.DefaultBranch))
 		}
-		if g.WikiAccessLevel != "" {
+		if g.WikiAccessLevel != gl.EnabledAccessControl {
 			body.SetAttributeValue("wiki_access_level", cty.StringVal(string(g.WikiAccessLevel)))
 		}
 		if g.IPRestrictionRanges != "" {

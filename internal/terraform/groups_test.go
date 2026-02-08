@@ -11,9 +11,17 @@ import (
 func TestWriteGroupsDefaultsOmitted(t *testing.T) {
 	groups := []*gl.Group{
 		{
-			Name:          "My Group",
-			Path:          "my-group",
-			EmailsEnabled: true,
+			Name:                  "My Group",
+			Path:                  "my-group",
+			Visibility:            gl.PublicVisibility,
+			LFSEnabled:            true,
+			RequestAccessEnabled:  true,
+			TwoFactorGracePeriod:  48,
+			ProjectCreationLevel:  gl.DeveloperProjectCreation,
+			SubGroupCreationLevel: gl.MaintainerSubGroupCreationLevelValue,
+			SharedRunnersSetting:  gl.EnabledSharedRunnersSettingValue,
+			WikiAccessLevel:       gl.EnabledAccessControl,
+			EmailsEnabled:         true,
 		},
 	}
 
@@ -29,10 +37,18 @@ func TestWriteGroupsAllOptions(t *testing.T) {
 	level := gl.MaintainerPermissions
 	groups := []*gl.Group{
 		{
-			ID:            42,
-			Name:          "Parent Group",
-			Path:          "parent-group",
-			EmailsEnabled: true,
+			ID:                    42,
+			Name:                  "Parent Group",
+			Path:                  "parent-group",
+			Visibility:            gl.PublicVisibility,
+			LFSEnabled:            true,
+			RequestAccessEnabled:  true,
+			TwoFactorGracePeriod:  48,
+			ProjectCreationLevel:  gl.DeveloperProjectCreation,
+			SubGroupCreationLevel: gl.MaintainerSubGroupCreationLevelValue,
+			SharedRunnersSetting:  gl.EnabledSharedRunnersSettingValue,
+			WikiAccessLevel:       gl.EnabledAccessControl,
+			EmailsEnabled:         true,
 		},
 		{
 			ID:                               100,
