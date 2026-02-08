@@ -155,6 +155,9 @@ func TestWriteProjectsAllOptions(t *testing.T) {
 		CIForwardDeploymentRollbackAllowed:        false,
 		CIPushRepositoryForJobTokenAllowed:        true,
 		CISeparatedCaches:                         false,
+		CIJobTokenScopeEnabled:                    true,
+		CIAllowForkPipelinesToRunInParentProject:  true,
+		BuildCoverageRegex:                        "/Total.*?(\\d+\\.\\d+)%/",
 		PublicJobs:                                false,
 		AllowMergeOnSkippedPipeline:               true,
 		OnlyAllowMergeIfPipelineSucceeds:          true,
@@ -163,6 +166,7 @@ func TestWriteProjectsAllOptions(t *testing.T) {
 		ResolveOutdatedDiffDiscussions:            true,
 		AutoDevopsEnabled:                         true,
 		EmailsEnabled:                             false,
+		Archived:                                  true,
 		ContainerExpirationPolicy: &gl.ContainerExpirationPolicy{
 			Cadence:         "1d",
 			KeepN:           5,

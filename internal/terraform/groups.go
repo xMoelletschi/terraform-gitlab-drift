@@ -79,6 +79,21 @@ func WriteGroups(groups []*gl.Group, w io.Writer, groupRefs groupRefMap) error {
 		if g.IPRestrictionRanges != "" {
 			body.SetAttributeValue("ip_restriction_ranges", cty.StringVal(g.IPRestrictionRanges))
 		}
+		if g.MaxArtifactsSize != 0 {
+			body.SetAttributeValue("max_artifacts_size", cty.NumberIntVal(g.MaxArtifactsSize))
+		}
+		if g.RepositoryStorage != "" {
+			body.SetAttributeValue("repository_storage", cty.StringVal(g.RepositoryStorage))
+		}
+		if g.OnlyAllowMergeIfPipelineSucceeds {
+			body.SetAttributeValue("only_allow_merge_if_pipeline_succeeds", cty.BoolVal(g.OnlyAllowMergeIfPipelineSucceeds))
+		}
+		if g.AllowMergeOnSkippedPipeline {
+			body.SetAttributeValue("allow_merge_on_skipped_pipeline", cty.BoolVal(g.AllowMergeOnSkippedPipeline))
+		}
+		if g.OnlyAllowMergeIfAllDiscussionsAreResolved {
+			body.SetAttributeValue("only_allow_merge_if_all_discussions_are_resolved", cty.BoolVal(g.OnlyAllowMergeIfAllDiscussionsAreResolved))
+		}
 
 		// Nested block: default_branch_protection_defaults
 		if !isDefaultBranchProtection(g.DefaultBranchProtectionDefaults) {
