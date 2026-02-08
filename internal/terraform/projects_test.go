@@ -14,7 +14,8 @@ func TestWriteProjectsDefaultsOmitted(t *testing.T) {
 			Name: "Minimal Project",
 			Path: "minimal-project",
 			Namespace: &gl.ProjectNamespace{
-				ID: 7,
+				ID:       7,
+				FullPath: "my-group",
 			},
 			Visibility:                             gl.PublicVisibility,
 			ContainerRegistryAccessLevel:           gl.EnabledAccessControl,
@@ -84,7 +85,8 @@ func TestWriteProjectsAllOptions(t *testing.T) {
 		Name: "Full Project",
 		Path: "full-project",
 		Namespace: &gl.ProjectNamespace{
-			ID: 123,
+			ID:       123,
+			FullPath: "full-group",
 		},
 		Description:                               "Full project description",
 		Visibility:                                gl.InternalVisibility,

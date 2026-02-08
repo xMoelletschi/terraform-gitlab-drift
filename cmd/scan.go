@@ -62,7 +62,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		"projects", len(resources.Projects),
 	)
 
-	if err := terraform.WriteAll(resources, terraformDir); err != nil {
+	if err := terraform.WriteAll(resources, terraformDir, gitlabGroup); err != nil {
 		return fmt.Errorf("writing terraform files: %w", err)
 	}
 

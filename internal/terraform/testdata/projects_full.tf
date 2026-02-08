@@ -1,4 +1,4 @@
-resource "gitlab_project" "full_project" {
+resource "gitlab_project" "full_group_full_project" {
   name                                             = "Full Project"
   path                                             = "full-project"
   namespace_id                                     = gitlab_group.full_group.id
@@ -92,4 +92,3 @@ resource "gitlab_project" "full_project" {
     enabled           = true
   }
 }
-

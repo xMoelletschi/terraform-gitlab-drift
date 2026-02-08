@@ -90,7 +90,7 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	if err := WriteAll(resources, dir); err != nil {
+	if err := WriteAll(resources, dir, "xdeveloperic"); err != nil {
 		t.Fatalf("WriteAll error: %v", err)
 	}
 
@@ -103,8 +103,8 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dir, "xdeveloperic.tf")); err != nil {
 		t.Fatalf("expected xdeveloperic.tf to exist: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(dir, "xdeveloperic_sub_group.tf")); err != nil {
-		t.Fatalf("expected xdeveloperic_sub_group.tf to exist: %v", err)
+	if _, err := os.Stat(filepath.Join(dir, "sub_group.tf")); err != nil {
+		t.Fatalf("expected sub_group.tf to exist: %v", err)
 	}
 
 	// The old monolithic file must NOT exist.
@@ -112,29 +112,29 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 		t.Fatal("expected gitlab_projects.tf to NOT exist, but it does")
 	}
 
-	// Verify content: xdeveloperic.tf should contain both projects A and B.
+	// Verify content: xdeveloperic.tf should contain both projects A and B with new naming.
 	data, err := os.ReadFile(filepath.Join(dir, "xdeveloperic.tf"))
 	if err != nil {
 		t.Fatalf("reading xdeveloperic.tf: %v", err)
 	}
 	content := string(data)
-	if !strings.Contains(content, `"project_a"`) {
-		t.Error("xdeveloperic.tf should contain project_a")
+	if !strings.Contains(content, `"xdeveloperic_project_a"`) {
+		t.Error("xdeveloperic.tf should contain xdeveloperic_project_a")
 	}
-	if !strings.Contains(content, `"project_b"`) {
-		t.Error("xdeveloperic.tf should contain project_b")
+	if !strings.Contains(content, `"xdeveloperic_project_b"`) {
+		t.Error("xdeveloperic.tf should contain xdeveloperic_project_b")
 	}
-	if strings.Contains(content, `"project_c"`) {
-		t.Error("xdeveloperic.tf should NOT contain project_c")
+	if strings.Contains(content, `"sub_group_project_c"`) {
+		t.Error("xdeveloperic.tf should NOT contain sub_group_project_c")
 	}
 
-	// Verify content: xdeveloperic_sub_group.tf should contain project C only.
-	data, err = os.ReadFile(filepath.Join(dir, "xdeveloperic_sub_group.tf"))
+	// Verify content: sub_group.tf should contain project C only with new naming.
+	data, err = os.ReadFile(filepath.Join(dir, "sub_group.tf"))
 	if err != nil {
-		t.Fatalf("reading xdeveloperic_sub_group.tf: %v", err)
+		t.Fatalf("reading sub_group.tf: %v", err)
 	}
 	content = string(data)
-	if !strings.Contains(content, `"project_c"`) {
-		t.Error("xdeveloperic_sub_group.tf should contain project_c")
+	if !strings.Contains(content, `"sub_group_project_c"`) {
+		t.Error("sub_group.tf should contain sub_group_project_c")
 	}
 }
