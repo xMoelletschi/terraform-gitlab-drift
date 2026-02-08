@@ -87,4 +87,3 @@ resource "gitlab_project" "full_group_full_project" {
     enabled           = true
   }
 }
-

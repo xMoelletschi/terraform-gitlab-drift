@@ -13,7 +13,7 @@ func WriteGroups(groups []*gl.Group, w io.Writer, groupRefs groupRefMap) error {
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 
-	for _, g := range groups {
+	for i, g := range groups {
 		block := rootBody.AppendNewBlock("resource", []string{"gitlab_group", normalizeToTerraformName(g.Path)})
 		body := block.Body()
 
@@ -113,7 +113,9 @@ func WriteGroups(groups []*gl.Group, w io.Writer, groupRefs groupRefMap) error {
 			}
 		}
 
-		rootBody.AppendNewline()
+		if i < len(groups)-1 {
+			rootBody.AppendNewline()
+		}
 	}
 
 	_, err := w.Write(f.Bytes())

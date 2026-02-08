@@ -65,13 +65,20 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string) error {
 
 		filename := normalizeToTerraformName(trimmedNs) + ".tf"
 		if err := writeFile(filepath.Join(dir, filename), func(w io.Writer) error {
+			hasGroup := false
 			if group, ok := groupsByPath[ns]; ok {
 				if err := WriteGroups([]*gl.Group{group}, w, groupRefs); err != nil {
 					return err
 				}
+				hasGroup = true
 			}
 
 			if projects := byNamespace[ns]; len(projects) > 0 {
+				if hasGroup {
+					if _, err := w.Write([]byte("\n")); err != nil {
+						return err
+					}
+				}
 				if err := WriteProjects(projects, w, groupRefs); err != nil {
 					return err
 				}

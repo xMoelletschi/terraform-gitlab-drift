@@ -33,4 +33,3 @@ resource "gitlab_group" "full_group" {
     developer_can_initial_push = true
   }
 }
-
