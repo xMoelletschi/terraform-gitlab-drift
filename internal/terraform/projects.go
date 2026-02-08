@@ -277,7 +277,7 @@ func WriteProjects(projects []*gl.Project, w io.Writer) error {
 			body.SetAttributeValue("emails_enabled", cty.BoolVal(p.EmailsEnabled))
 		}
 
-		if p.ContainerExpirationPolicy != nil {
+		if p.ContainerExpirationPolicy != nil && p.ContainerExpirationPolicy.Enabled {
 			cep := p.ContainerExpirationPolicy
 			cepBlock := body.AppendNewBlock("container_expiration_policy", nil)
 			cepBody := cepBlock.Body()
