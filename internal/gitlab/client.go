@@ -14,7 +14,6 @@ type Client struct {
 type Resources struct {
 	Groups   []*gl.Group
 	Projects []*gl.Project
-	Users    []*gl.User
 }
 
 func NewClient(token, baseURL string) (*Client, error) {
@@ -36,14 +35,8 @@ func (c *Client) FetchAll(ctx context.Context) (*Resources, error) {
 		return nil, fmt.Errorf("listing projects: %w", err)
 	}
 
-	users, err := c.ListUsers(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("listing users: %w", err)
-	}
-
 	return &Resources{
 		Groups:   groups,
 		Projects: projects,
-		Users:    users,
 	}, nil
 }

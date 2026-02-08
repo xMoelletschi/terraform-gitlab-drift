@@ -26,7 +26,6 @@ func WriteAll(resources *gitlab.Resources, dir string) error {
 	}{
 		{"gitlab_groups.tf", func(w io.Writer) error { return WriteGroups(resources.Groups, w) }},
 		{"gitlab_projects.tf", func(w io.Writer) error { return WriteProjects(resources.Projects, w) }},
-		{"gitlab_users.tf", func(w io.Writer) error { return WriteUsers(resources.Users, w) }},
 	}
 
 	var errs []error
