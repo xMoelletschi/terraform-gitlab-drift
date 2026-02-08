@@ -8,7 +8,8 @@ import (
 )
 
 type Client struct {
-	api *gl.Client
+	api   *gl.Client
+	group string
 }
 
 type Resources struct {
@@ -16,12 +17,12 @@ type Resources struct {
 	Projects []*gl.Project
 }
 
-func NewClient(token, baseURL string) (*Client, error) {
+func NewClient(token, baseURL, group string) (*Client, error) {
 	client, err := gl.NewClient(token, gl.WithBaseURL(baseURL))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GitLab client: %w", err)
 	}
-	return &Client{api: client}, nil
+	return &Client{api: client, group: group}, nil
 }
 
 func (c *Client) FetchAll(ctx context.Context) (*Resources, error) {

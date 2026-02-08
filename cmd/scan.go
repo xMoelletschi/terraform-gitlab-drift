@@ -32,13 +32,18 @@ func runScan(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("GitLab token required: use --gitlab-token flag or set GITLAB_TOKEN environment variable")
 	}
 
+	if gitlabGroup == "" && gitlabURL == defaultGitLabURL {
+		return fmt.Errorf("--group is required when using gitlab.com, specify your top-level group")
+	}
+
 	slog.Info("scanning for unmanaged GitLab resources",
 		"gitlab_url", gitlabURL,
+		"group", gitlabGroup,
 		"terraform_dir", terraformDir,
 		"create_mr", createMR,
 	)
 
-	client, err := gitlab.NewClient(token, gitlabURL)
+	client, err := gitlab.NewClient(token, gitlabURL, gitlabGroup)
 	if err != nil {
 		return fmt.Errorf("creating client: %w", err)
 	}

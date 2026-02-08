@@ -7,10 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const defaultGitLabURL = "https://gitlab.com"
+
 var (
 	terraformDir string
 	gitlabToken  string
 	gitlabURL    string
+	gitlabGroup  string
 	verbose      bool
 	jsonOutput   bool
 )
@@ -32,7 +35,8 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&terraformDir, "terraform-dir", ".", "Path to Terraform directory")
 	rootCmd.PersistentFlags().StringVar(&gitlabToken, "gitlab-token", "", "GitLab API token (or set GITLAB_TOKEN env var)")
-	rootCmd.PersistentFlags().StringVar(&gitlabURL, "gitlab-url", "https://gitlab.com", "GitLab instance URL")
+	rootCmd.PersistentFlags().StringVar(&gitlabURL, "gitlab-url", defaultGitLabURL, "GitLab instance URL")
+	rootCmd.PersistentFlags().StringVar(&gitlabGroup, "group", "", "GitLab top-level group to scan (required for gitlab.com)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose (debug) logging")
 	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "Output logs in JSON format (useful for CI)")
 }
