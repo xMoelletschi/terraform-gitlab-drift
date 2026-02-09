@@ -2,7 +2,13 @@
 .gitignore
 .github/
 .releaserc.json
-Dockerfile
 *.md
+LICENSE
+ROADMAP.md
+Dockerfile
 *_test.go
 *.test
+**/testdata/
+coverage.txt
+bin/
+dist/
