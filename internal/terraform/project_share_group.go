@@ -5,6 +5,10 @@ import (
 	"io"
 	"strings"
 
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/zclconf/go-cty/cty"
+
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
 
@@ -33,12 +37,12 @@ func WriteProjectMembershipVariable(projects []*gl.Project, w io.Writer) error {
 	b.WriteString("  }\n")
 	b.WriteString("}\n")
 
-	_, err := w.Write([]byte(b.String()))
+	_, err := w.Write(hclwrite.Format([]byte(b.String())))
 	return err
 }
 
 func WriteProjectMembershipHelpers(w io.Writer) error {
-	_, err := fmt.Fprint(w, `locals {
+	src := []byte(`locals {
   groups_by_projects = toset(distinct(flatten([
     for key, project in var.gitlab_project_membership : [
       for group, permission in project : [
@@ -53,10 +57,12 @@ data "gitlab_group" "by_projects" {
   full_path = each.key
 }
 `)
+	_, err := w.Write(hclwrite.Format(src))
 	return err
 }
 
 func WriteProjectShareGroupResource(project *gl.Project, w io.Writer) error {
+	f := hclwrite.NewEmptyFile()
 	name := normalizeToTerraformName(project.Path)
 	if project.Namespace != nil && project.Namespace.FullPath != "" {
 		parts := strings.Split(project.Namespace.FullPath, "/")
@@ -64,13 +70,41 @@ func WriteProjectShareGroupResource(project *gl.Project, w io.Writer) error {
 		name = normalizeToTerraformName(parentGroup + "_" + project.Path)
 	}
 	path := projectFullPath(project)
-	_, err := fmt.Fprintf(w, `resource "gitlab_project_share_group" "%s" {
-  for_each     = var.gitlab_project_membership["%s"]
-  project      = gitlab_project.%s.id
-  group_id     = data.gitlab_group.by_projects[each.key].id
-  group_access = each.value
-}
-`, name, path, name)
+
+	block := f.Body().AppendNewBlock("resource", []string{"gitlab_project_share_group", name})
+	body := block.Body()
+
+	body.SetAttributeTraversal("for_each", hcl.Traversal{
+		hcl.TraverseRoot{Name: "var"},
+		hcl.TraverseAttr{Name: "gitlab_project_membership"},
+		hcl.TraverseIndex{Key: cty.StringVal(path)},
+	})
+
+	body.SetAttributeTraversal("project", hcl.Traversal{
+		hcl.TraverseRoot{Name: "gitlab_project"},
+		hcl.TraverseAttr{Name: name},
+		hcl.TraverseAttr{Name: "id"},
+	})
+
+	body.SetAttributeRaw("group_id", tokensForIndexedTraversal(
+		hcl.Traversal{
+			hcl.TraverseRoot{Name: "data"},
+			hcl.TraverseAttr{Name: "gitlab_group"},
+			hcl.TraverseAttr{Name: "by_projects"},
+		},
+		hcl.Traversal{
+			hcl.TraverseRoot{Name: "each"},
+			hcl.TraverseAttr{Name: "key"},
+		},
+		"id",
+	))
+
+	body.SetAttributeTraversal("group_access", hcl.Traversal{
+		hcl.TraverseRoot{Name: "each"},
+		hcl.TraverseAttr{Name: "value"},
+	})
+
+	_, err := w.Write(f.Bytes())
 	return err
 }
 

@@ -5,6 +5,10 @@ import (
 	"io"
 	"strings"
 
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
@@ -34,18 +38,45 @@ func WriteGroupMembershipVariable(groups []*gl.Group, groupMembers gitlab.GroupM
 	b.WriteString("  }\n")
 	b.WriteString("}\n")
 
-	_, err := w.Write([]byte(b.String()))
+	_, err := w.Write(hclwrite.Format([]byte(b.String())))
 	return err
 }
 
 func WriteGroupMembershipResource(group *gl.Group, w io.Writer) error {
+	f := hclwrite.NewEmptyFile()
 	name := normalizeToTerraformName(group.Path)
-	_, err := fmt.Fprintf(w, `resource "gitlab_group_membership" "%s" {
-  for_each     = var.gitlab_group_membership["%s"]
-  group_id     = gitlab_group.%s.id
-  user_id      = gitlab_user.main[each.key].id
-  access_level = each.value
-}
-`, name, group.FullPath, name)
+	block := f.Body().AppendNewBlock("resource", []string{"gitlab_group_membership", name})
+	body := block.Body()
+
+	body.SetAttributeTraversal("for_each", hcl.Traversal{
+		hcl.TraverseRoot{Name: "var"},
+		hcl.TraverseAttr{Name: "gitlab_group_membership"},
+		hcl.TraverseIndex{Key: cty.StringVal(group.FullPath)},
+	})
+
+	body.SetAttributeTraversal("group_id", hcl.Traversal{
+		hcl.TraverseRoot{Name: "gitlab_group"},
+		hcl.TraverseAttr{Name: name},
+		hcl.TraverseAttr{Name: "id"},
+	})
+
+	body.SetAttributeRaw("user_id", tokensForIndexedTraversal(
+		hcl.Traversal{
+			hcl.TraverseRoot{Name: "gitlab_user"},
+			hcl.TraverseAttr{Name: "main"},
+		},
+		hcl.Traversal{
+			hcl.TraverseRoot{Name: "each"},
+			hcl.TraverseAttr{Name: "key"},
+		},
+		"id",
+	))
+
+	body.SetAttributeTraversal("access_level", hcl.Traversal{
+		hcl.TraverseRoot{Name: "each"},
+		hcl.TraverseAttr{Name: "value"},
+	})
+
+	_, err := w.Write(f.Bytes())
 	return err
 }

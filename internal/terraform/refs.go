@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 	gl "gitlab.com/gitlab-org/api/client-go"
@@ -38,4 +39,20 @@ func setGroupIDAttribute(body *hclwrite.Body, attr string, id int64, refs groupR
 		}
 	}
 	body.SetAttributeValue(attr, cty.NumberIntVal(int64(id)))
+}
+
+// tokensForIndexedTraversal builds tokens for expressions like:
+// data.gitlab_group.by_projects[each.key].id
+func tokensForIndexedTraversal(base, index hcl.Traversal, suffixAttrs ...string) hclwrite.Tokens {
+	tokens := hclwrite.TokensForTraversal(base)
+	tokens = append(tokens, &hclwrite.Token{Type: hclsyntax.TokenOBrack, Bytes: []byte("[")})
+	tokens = append(tokens, hclwrite.TokensForTraversal(index)...)
+	tokens = append(tokens, &hclwrite.Token{Type: hclsyntax.TokenCBrack, Bytes: []byte("]")})
+	for _, attr := range suffixAttrs {
+		tokens = append(tokens,
+			&hclwrite.Token{Type: hclsyntax.TokenDot, Bytes: []byte(".")},
+			&hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte(attr)},
+		)
+	}
+	return tokens
 }
