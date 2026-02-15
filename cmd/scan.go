@@ -100,6 +100,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 			if _, err := os.Stat(existingFile); os.IsNotExist(err) {
 				slog.Warn("new unmanaged resource detected", "file", base)
+				diffCmd := exec.Command("diff", "-u", "--color=auto", "/dev/null", genFile)
+				diffCmd.Stdout = os.Stdout
+				diffCmd.Stderr = os.Stderr
+				_ = diffCmd.Run()
 				driftFound = true
 				continue
 			}
