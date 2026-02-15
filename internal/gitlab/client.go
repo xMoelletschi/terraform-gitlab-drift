@@ -13,8 +13,9 @@ type Client struct {
 }
 
 type Resources struct {
-	Groups   []*gl.Group
-	Projects []*gl.Project
+	Groups       []*gl.Group
+	Projects     []*gl.Project
+	GroupMembers GroupMembers
 }
 
 func NewClient(token, baseURL, group string) (*Client, error) {
@@ -36,8 +37,14 @@ func (c *Client) FetchAll(ctx context.Context) (*Resources, error) {
 		return nil, fmt.Errorf("listing projects: %w", err)
 	}
 
+	groupMembers, err := c.ListGroupMembers(ctx, groups)
+	if err != nil {
+		return nil, fmt.Errorf("listing group members: %w", err)
+	}
+
 	return &Resources{
-		Groups:   groups,
-		Projects: projects,
+		Groups:       groups,
+		Projects:     projects,
+		GroupMembers: groupMembers,
 	}, nil
 }

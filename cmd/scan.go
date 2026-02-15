@@ -65,9 +65,21 @@ func runScan(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("fetching resources: %w", err)
 	}
 
+	groupMemberCount := 0
+	for _, members := range resources.GroupMembers {
+		groupMemberCount += len(members)
+	}
+
+	projectShareGroupCount := 0
+	for _, p := range resources.Projects {
+		projectShareGroupCount += len(p.SharedWithGroups)
+	}
+
 	slog.Info("fetched resources",
 		"groups", len(resources.Groups),
 		"projects", len(resources.Projects),
+		"group_members", groupMemberCount,
+		"project_share_groups", projectShareGroupCount,
 	)
 
 	outputDir := terraformDir
