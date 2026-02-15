@@ -50,6 +50,26 @@ drift-check:
 | `--verbose`, `-v` | -                    | `false`              | Enable verbose (debug) logging                    |
 | `--json`          | -                    | `false`              | Output logs in JSON format                        |
 
+### Directory Structure
+
+The tool generates one `.tf` file per GitLab namespace, using normalized names (lowercase, `/` and `-` replaced with `_`). Your Terraform directory should follow this structure to get accurate drift detection:
+
+```
+terraform/
+├── backend.tf
+├── providers.tf
+├── my_group.tf             # generated: top-level group + its projects
+├── my_group_sub_group.tf   # generated: sub-group + its projects
+└── ...
+```
+
+> **Important:** The drift check only compares files that match the generated filenames.
+> If you have resources defined in differently named files (e.g. `main.tf`, `projects.tf`),
+> they will not be detected and the tool will report those resources as unmanaged.
+>
+> To fix this, move your resource definitions into the files matching the generated naming
+> convention, or use `--overwrite` to let the tool manage the file structure for you.
+
 ### Supported Resources
 
 - ✅ GitLab Groups ([`gitlab_group`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/group))
