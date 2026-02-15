@@ -84,28 +84,49 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	slog.Info("wrote terraform files", "dir", outputDir, "overwrite", overwrite)
 
-	// Compare generated files with existing ones using diff command
+	// Compare generated .tf files with existing ones using diff command
 	if showDiff {
 		slog.Info("comparing files", "existing", terraformDir, "generated", outputDir)
 
-		diffCmd := exec.Command("diff", "-u", "-r",
-			"--color=auto",
-			terraformDir,
-			outputDir,
-		)
-		diffCmd.Stdout = os.Stdout
-		diffCmd.Stderr = os.Stderr
-
-		err := diffCmd.Run()
+		files, err := filepath.Glob(filepath.Join(outputDir, "*.tf"))
 		if err != nil {
-			if exitErr, ok := err.(*exec.ExitError); ok {
-				if exitErr.ExitCode() == 1 {
-					slog.Warn("drift detected")
-					os.Exit(1)
-				}
-				return fmt.Errorf("diff command failed: %w", err)
+			return fmt.Errorf("listing generated files: %w", err)
+		}
+
+		driftFound := false
+		for _, genFile := range files {
+			base := filepath.Base(genFile)
+			existingFile := filepath.Join(terraformDir, base)
+
+			if _, err := os.Stat(existingFile); os.IsNotExist(err) {
+				slog.Warn("new unmanaged resource detected", "file", base)
+				diffCmd := exec.Command("diff", "-u", "--color=auto", "/dev/null", genFile)
+				diffCmd.Stdout = os.Stdout
+				diffCmd.Stderr = os.Stderr
+				_ = diffCmd.Run()
+				driftFound = true
+				continue
 			}
-			return fmt.Errorf("running diff command: %w", err)
+
+			diffCmd := exec.Command("diff", "-u", "--color=auto", existingFile, genFile)
+			diffCmd.Stdout = os.Stdout
+			diffCmd.Stderr = os.Stderr
+
+			if err := diffCmd.Run(); err != nil {
+				if exitErr, ok := err.(*exec.ExitError); ok {
+					if exitErr.ExitCode() == 1 {
+						driftFound = true
+						continue
+					}
+					return fmt.Errorf("diff command failed for %s: %w", base, err)
+				}
+				return fmt.Errorf("running diff command for %s: %w", base, err)
+			}
+		}
+
+		if driftFound {
+			slog.Warn("drift detected")
+			os.Exit(1)
 		}
 
 		slog.Info("no drift detected")
