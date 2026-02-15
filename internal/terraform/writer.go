@@ -55,32 +55,60 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string) error {
 		}
 	}
 
-	// Write one file per namespace with group at the top, followed by projects
+	// Write group_membership.tf with variable only
+	if err := writeFile(filepath.Join(dir, "group_membership.tf"), func(w io.Writer) error {
+		return WriteGroupMembershipVariable(resources.Groups, resources.GroupMembers, w)
+	}); err != nil {
+		errs = append(errs, fmt.Errorf("group_membership.tf: %w", err))
+	}
+
+	// Write project_membership.tf with variable + helpers only
+	if err := writeFile(filepath.Join(dir, "project_membership.tf"), func(w io.Writer) error {
+		if err := WriteProjectMembershipVariable(resources.Projects, w); err != nil {
+			return err
+		}
+		if _, err := w.Write([]byte("\n")); err != nil {
+			return err
+		}
+		return WriteProjectMembershipHelpers(w)
+	}); err != nil {
+		errs = append(errs, fmt.Errorf("project_membership.tf: %w", err))
+	}
+
+	// Write one file per namespace: group → group membership resource → projects → project share group resources
 	for ns := range allNamespaces {
 		trimmedNs := strings.TrimPrefix(ns, mainGroup+"/")
 		if trimmedNs == mainGroup {
-			// If ns equals mainGroup exactly, keep it as-is
 			trimmedNs = ns
 		}
 
 		filename := normalizeToTerraformName(trimmedNs) + ".tf"
 		if err := writeFile(filepath.Join(dir, filename), func(w io.Writer) error {
-			hasGroup := false
+			written := false
+
 			if group, ok := groupsByPath[ns]; ok {
 				if err := WriteGroups([]*gl.Group{group}, w, groupRefs); err != nil {
 					return err
 				}
-				hasGroup = true
+				if err := WriteGroupMembershipResource(group, w); err != nil {
+					return err
+				}
+				written = true
 			}
 
 			if projects := byNamespace[ns]; len(projects) > 0 {
-				if hasGroup {
-					if _, err := w.Write([]byte("\n")); err != nil {
+				for i, p := range projects {
+					if written || i > 0 {
+						if _, err := w.Write([]byte("\n")); err != nil {
+							return err
+						}
+					}
+					if err := WriteProjects([]*gl.Project{p}, w, groupRefs); err != nil {
 						return err
 					}
-				}
-				if err := WriteProjects(projects, w, groupRefs); err != nil {
-					return err
+					if err := WriteProjectShareGroupResource(p, w); err != nil {
+						return err
+					}
 				}
 			}
 

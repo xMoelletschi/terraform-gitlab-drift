@@ -22,8 +22,6 @@ resource "gitlab_group" "full_group" {
   default_branch                                   = "main"
   wiki_access_level                                = "private"
   ip_restriction_ranges                            = "10.0.0.0/24"
-  max_artifacts_size                               = 100
-  repository_storage                               = "default"
   only_allow_merge_if_pipeline_succeeds            = true
   allow_merge_on_skipped_pipeline                  = true
   only_allow_merge_if_all_discussions_are_resolved = true

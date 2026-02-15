@@ -60,6 +60,8 @@ terraform/
 ├── providers.tf
 ├── my_group.tf             # generated: top-level group + its projects
 ├── my_group_sub_group.tf   # generated: sub-group + its projects
+├── group_membership.tf     # generated: variable with group → user memberships
+├── project_membership.tf   # generated: variable with project → shared groups
 └── ...
 ```
 
@@ -73,7 +75,9 @@ terraform/
 ### Supported Resources
 
 - ✅ GitLab Groups ([`gitlab_group`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/group))
+- ✅ GitLab Group Memberships ([`gitlab_group_membership`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/group_membership))
 - ✅ GitLab Projects ([`gitlab_project`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project))
+- ✅ GitLab Project Share Groups ([`gitlab_project_share_group`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_share_group))
 - 🚧 More resources coming soon
 
 ## Contributing

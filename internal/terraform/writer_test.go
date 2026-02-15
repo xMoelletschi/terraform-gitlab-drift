@@ -79,6 +79,14 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 					ID:       10,
 					FullPath: "xdeveloperic",
 				},
+				SharedWithGroups: []gl.ProjectSharedWithGroup{
+					{
+						GroupID:          20,
+						GroupName:        "sub-group",
+						GroupFullPath:    "xdeveloperic/sub-group",
+						GroupAccessLevel: 30,
+					},
+				},
 			},
 			{
 				ID:   2,
@@ -99,6 +107,15 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 				},
 			},
 		},
+		GroupMembers: map[int64][]*gl.GroupMember{
+			10: {
+				{
+					ID:          100,
+					Username:    "admin",
+					AccessLevel: gl.OwnerPermissions,
+				},
+			},
+		},
 	}
 
 	dir := t.TempDir()
@@ -106,9 +123,39 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 		t.Fatalf("WriteAll error: %v", err)
 	}
 
-	// gitlab_groups.tf must NOT exist anymore (groups are in namespace files now).
-	if _, err := os.Stat(filepath.Join(dir, "gitlab_groups.tf")); err == nil {
-		t.Fatal("expected gitlab_groups.tf to NOT exist, but it does")
+	// group_membership.tf: variable only, no resources
+	data, err := os.ReadFile(filepath.Join(dir, "group_membership.tf"))
+	if err != nil {
+		t.Fatalf("reading group_membership.tf: %v", err)
+	}
+	gmContent := string(data)
+	if !strings.Contains(gmContent, `variable "gitlab_group_membership"`) {
+		t.Error("group_membership.tf should contain gitlab_group_membership variable")
+	}
+	if !strings.Contains(gmContent, `"admin" = "owner"`) {
+		t.Error("group_membership.tf should contain admin user entry")
+	}
+	if strings.Contains(gmContent, `resource`) {
+		t.Error("group_membership.tf should NOT contain resource blocks")
+	}
+
+	// project_membership.tf: variable + helpers only, no resources
+	data, err = os.ReadFile(filepath.Join(dir, "project_membership.tf"))
+	if err != nil {
+		t.Fatalf("reading project_membership.tf: %v", err)
+	}
+	pmContent := string(data)
+	if !strings.Contains(pmContent, `variable "gitlab_project_membership"`) {
+		t.Error("project_membership.tf should contain gitlab_project_membership variable")
+	}
+	if !strings.Contains(pmContent, `"xdeveloperic/sub-group" = "developer"`) {
+		t.Error("project_membership.tf should contain shared group entry")
+	}
+	if !strings.Contains(pmContent, `data "gitlab_group" "by_projects"`) {
+		t.Error("project_membership.tf should contain data source for group lookup")
+	}
+	if strings.Contains(pmContent, `resource`) {
+		t.Error("project_membership.tf should NOT contain resource blocks")
 	}
 
 	// One file per namespace.
@@ -119,13 +166,8 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 		t.Fatalf("expected sub_group.tf to exist: %v", err)
 	}
 
-	// The old monolithic file must NOT exist.
-	if _, err := os.Stat(filepath.Join(dir, "gitlab_projects.tf")); err == nil {
-		t.Fatal("expected gitlab_projects.tf to NOT exist, but it does")
-	}
-
-	// Verify content: xdeveloperic.tf should contain the group + projects A and B.
-	data, err := os.ReadFile(filepath.Join(dir, "xdeveloperic.tf"))
+	// Verify xdeveloperic.tf: group + membership resource + projects + share group resources
+	data, err = os.ReadFile(filepath.Join(dir, "xdeveloperic.tf"))
 	if err != nil {
 		t.Fatalf("reading xdeveloperic.tf: %v", err)
 	}
@@ -133,17 +175,32 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 	if !strings.Contains(content, `gitlab_group" "xdeveloperic"`) {
 		t.Error("xdeveloperic.tf should contain the xdeveloperic group")
 	}
+	if !strings.Contains(content, `gitlab_group_membership" "xdeveloperic"`) {
+		t.Error("xdeveloperic.tf should contain group membership resource")
+	}
 	if !strings.Contains(content, `"xdeveloperic_project_a"`) {
 		t.Error("xdeveloperic.tf should contain xdeveloperic_project_a")
 	}
-	if !strings.Contains(content, `"xdeveloperic_project_b"`) {
-		t.Error("xdeveloperic.tf should contain xdeveloperic_project_b")
-	}
-	if strings.Contains(content, `"sub_group_project_c"`) {
-		t.Error("xdeveloperic.tf should NOT contain sub_group_project_c")
+	if !strings.Contains(content, `gitlab_project_share_group" "xdeveloperic_project_a"`) {
+		t.Error("xdeveloperic.tf should contain project share group resource")
 	}
 
-	// Verify content: sub_group.tf should contain the group + project C.
+	// Verify ordering: group → membership → project → share group
+	groupIdx := strings.Index(content, `gitlab_group" "xdeveloperic"`)
+	membershipIdx := strings.Index(content, `gitlab_group_membership" "xdeveloperic"`)
+	projectIdx := strings.Index(content, `gitlab_project" "xdeveloperic_project_a"`)
+	shareIdx := strings.Index(content, `gitlab_project_share_group" "xdeveloperic_project_a"`)
+	if groupIdx > membershipIdx {
+		t.Error("group should appear before membership resource")
+	}
+	if membershipIdx > projectIdx {
+		t.Error("membership resource should appear before projects")
+	}
+	if projectIdx > shareIdx {
+		t.Error("projects should appear before share group resources")
+	}
+
+	// Verify sub_group.tf
 	data, err = os.ReadFile(filepath.Join(dir, "sub_group.tf"))
 	if err != nil {
 		t.Fatalf("reading sub_group.tf: %v", err)
@@ -152,16 +209,10 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 	if !strings.Contains(content, `gitlab_group" "sub_group"`) {
 		t.Error("sub_group.tf should contain the sub_group group")
 	}
-	if !strings.Contains(content, `parent_id`) {
-		t.Error("sub_group.tf should contain parent_id reference")
+	if !strings.Contains(content, `gitlab_group_membership" "sub_group"`) {
+		t.Error("sub_group.tf should contain group membership resource")
 	}
 	if !strings.Contains(content, `"sub_group_project_c"`) {
 		t.Error("sub_group.tf should contain sub_group_project_c")
-	}
-	// Verify group is before projects (group should appear first in file)
-	groupIdx := strings.Index(content, `gitlab_group" "sub_group"`)
-	projectIdx := strings.Index(content, `gitlab_project" "sub_group_project_c"`)
-	if groupIdx == -1 || projectIdx == -1 || groupIdx > projectIdx {
-		t.Error("sub_group.tf: group should appear before projects")
 	}
 }
