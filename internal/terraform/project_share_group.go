@@ -5,6 +5,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/hashicorp/hcl/v2/hclwrite"
+
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
 
@@ -33,7 +35,7 @@ func WriteProjectMembershipVariable(projects []*gl.Project, w io.Writer) error {
 	b.WriteString("  }\n")
 	b.WriteString("}\n")
 
-	_, err := w.Write([]byte(b.String()))
+	_, err := w.Write(hclwrite.Format([]byte(b.String())))
 	return err
 }
 

@@ -5,6 +5,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/hashicorp/hcl/v2/hclwrite"
+
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
@@ -34,7 +36,7 @@ func WriteGroupMembershipVariable(groups []*gl.Group, groupMembers gitlab.GroupM
 	b.WriteString("  }\n")
 	b.WriteString("}\n")
 
-	_, err := w.Write([]byte(b.String()))
+	_, err := w.Write(hclwrite.Format([]byte(b.String())))
 	return err
 }
 
