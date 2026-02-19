@@ -1,12 +1,14 @@
 FROM golang:1.25-alpine AS builder
 
+ARG VERSION=dev
+
 WORKDIR /build
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o terraform-gitlab-drift .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s -X github.com/xMoelletschi/terraform-gitlab-drift/cmd.version=${VERSION}" -o terraform-gitlab-drift .
 
 FROM alpine:3.23.3
 

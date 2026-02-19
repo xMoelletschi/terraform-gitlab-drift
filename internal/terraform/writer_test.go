@@ -119,7 +119,7 @@ func TestWriteAllSplitsProjectsByNamespace(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	if err := WriteAll(resources, dir, "xdeveloperic"); err != nil {
+	if err := WriteAll(resources, dir, "xdeveloperic", nil); err != nil {
 		t.Fatalf("WriteAll error: %v", err)
 	}
 

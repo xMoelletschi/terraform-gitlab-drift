@@ -47,6 +47,7 @@ drift-check:
 | `--terraform-dir` | -                    | `.`                  | Path to Terraform directory                       |
 | `--overwrite`     | -                    | `false`              | Overwrite files in terraform directory            |
 | `--show-diff`     | -                    | `true`               | Show diff between generated and existing files    |
+| `--skip`          | -                    | -                    | Resource types to skip (comma-separated). Use `premium` to skip all Premium-tier resources |
 | `--verbose`, `-v` | -                    | `false`              | Enable verbose (debug) logging                    |
 | `--json`          | -                    | `false`              | Output logs in JSON format                        |
 

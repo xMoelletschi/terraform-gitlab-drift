@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
+	"github.com/xMoelletschi/terraform-gitlab-drift/internal/skip"
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
 
@@ -20,7 +21,7 @@ func normalizeToTerraformName(path string) string {
 	return normalized
 }
 
-func WriteAll(resources *gitlab.Resources, dir string, mainGroup string) error {
+func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet skip.Set) error {
 	var errs []error
 
 	groupRefs := buildGroupRefMap(resources.Groups)
@@ -55,24 +56,34 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string) error {
 		}
 	}
 
-	// Write group_membership.tf with variable only
-	if err := writeFile(filepath.Join(dir, "group_membership.tf"), func(w io.Writer) error {
-		return WriteGroupMembershipVariable(resources.Groups, resources.GroupMembers, w)
-	}); err != nil {
-		errs = append(errs, fmt.Errorf("group_membership.tf: %w", err))
+	// Write group_membership.tf with variable + user data source
+	if !skipSet.Has("memberships") {
+		if err := writeFile(filepath.Join(dir, "group_membership.tf"), func(w io.Writer) error {
+			if err := WriteGroupMembershipVariable(resources.Groups, resources.GroupMembers, w); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte("\n")); err != nil {
+				return err
+			}
+			return WriteUserDataSource(w)
+		}); err != nil {
+			errs = append(errs, fmt.Errorf("group_membership.tf: %w", err))
+		}
 	}
 
 	// Write project_membership.tf with variable + helpers only
-	if err := writeFile(filepath.Join(dir, "project_membership.tf"), func(w io.Writer) error {
-		if err := WriteProjectMembershipVariable(resources.Projects, w); err != nil {
-			return err
+	if !skipSet.Has("memberships") {
+		if err := writeFile(filepath.Join(dir, "project_membership.tf"), func(w io.Writer) error {
+			if err := WriteProjectMembershipVariable(resources.Projects, w); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte("\n")); err != nil {
+				return err
+			}
+			return WriteProjectMembershipHelpers(w)
+		}); err != nil {
+			errs = append(errs, fmt.Errorf("project_membership.tf: %w", err))
 		}
-		if _, err := w.Write([]byte("\n")); err != nil {
-			return err
-		}
-		return WriteProjectMembershipHelpers(w)
-	}); err != nil {
-		errs = append(errs, fmt.Errorf("project_membership.tf: %w", err))
 	}
 
 	// Write one file per namespace: group → group membership resource → projects → project share group resources
@@ -90,8 +101,10 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string) error {
 				if err := WriteGroups([]*gl.Group{group}, w, groupRefs); err != nil {
 					return err
 				}
-				if err := WriteGroupMembershipResource(group, w); err != nil {
-					return err
+				if !skipSet.Has("memberships") {
+					if err := WriteGroupMembershipResource(group, w); err != nil {
+						return err
+					}
 				}
 				written = true
 			}
@@ -106,8 +119,10 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string) error {
 					if err := WriteProjects([]*gl.Project{p}, w, groupRefs); err != nil {
 						return err
 					}
-					if err := WriteProjectShareGroupResource(p, w); err != nil {
-						return err
+					if !skipSet.Has("memberships") {
+						if err := WriteProjectShareGroupResource(p, w); err != nil {
+							return err
+						}
 					}
 				}
 			}
