@@ -1,7 +1,9 @@
 .PHONY: build test lint fmt deps gotestsum test-update
 
+VERSION ?= dev
+
 build:
-	go build -race -o bin/terraform-gitlab-drift .
+	go build -race -ldflags "-X github.com/xMoelletschi/terraform-gitlab-drift/cmd.version=$(VERSION)" -o bin/terraform-gitlab-drift .
 
 test:
 	go test -v -race -count=1 ./...

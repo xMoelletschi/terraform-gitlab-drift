@@ -9,6 +9,8 @@ import (
 
 const defaultGitLabURL = "https://gitlab.com"
 
+var version = "dev"
+
 var (
 	terraformDir string
 	gitlabToken  string
@@ -19,8 +21,9 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "terraform-gitlab-drift",
-	Short: "Detect GitLab resources not managed by Terraform",
+	Use:     "terraform-gitlab-drift",
+	Short:   "Detect GitLab resources not managed by Terraform",
+	Version: version,
 }
 
 func Execute() {
