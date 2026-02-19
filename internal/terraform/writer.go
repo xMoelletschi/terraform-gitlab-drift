@@ -56,10 +56,16 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 		}
 	}
 
-	// Write group_membership.tf with variable only
+	// Write group_membership.tf with variable + user data source
 	if !skipSet.Has("memberships") {
 		if err := writeFile(filepath.Join(dir, "group_membership.tf"), func(w io.Writer) error {
-			return WriteGroupMembershipVariable(resources.Groups, resources.GroupMembers, w)
+			if err := WriteGroupMembershipVariable(resources.Groups, resources.GroupMembers, w); err != nil {
+				return err
+			}
+			if _, err := w.Write([]byte("\n")); err != nil {
+				return err
+			}
+			return WriteUserDataSource(w)
 		}); err != nil {
 			errs = append(errs, fmt.Errorf("group_membership.tf: %w", err))
 		}

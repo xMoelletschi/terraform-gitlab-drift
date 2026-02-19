@@ -11,6 +11,23 @@ import (
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
 
+func WriteUserDataSource(w io.Writer) error {
+	_, err := fmt.Fprint(w, `locals {
+  users_by_groups = toset(distinct(flatten([
+    for key, group in var.gitlab_group_membership : [
+      for user, access in group : user
+    ]
+  ])))
+}
+
+data "gitlab_user" "main" {
+  for_each = local.users_by_groups
+  username = each.key
+}
+`)
+	return err
+}
+
 func WriteGroupMembershipVariable(groups []*gl.Group, groupMembers gitlab.GroupMembers, w io.Writer) error {
 	var b strings.Builder
 	b.WriteString("variable \"gitlab_group_membership\" {\n")
@@ -45,7 +62,7 @@ func WriteGroupMembershipResource(group *gl.Group, w io.Writer) error {
 	_, err := fmt.Fprintf(w, `resource "gitlab_group_membership" "%s" {
   for_each     = var.gitlab_group_membership["%s"]
   group_id     = gitlab_group.%s.id
-  user_id      = gitlab_user.main[each.key].id
+  user_id      = data.gitlab_user.main[each.key].id
   access_level = each.value
 }
 `, name, group.FullPath, name)
