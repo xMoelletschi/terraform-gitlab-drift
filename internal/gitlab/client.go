@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/xMoelletschi/terraform-gitlab-drift/internal/skip"
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
 
@@ -26,7 +27,7 @@ func NewClient(token, baseURL, group string) (*Client, error) {
 	return &Client{api: client, group: group}, nil
 }
 
-func (c *Client) FetchAll(ctx context.Context) (*Resources, error) {
+func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, error) {
 	groups, err := c.ListGroups(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing groups: %w", err)
@@ -37,9 +38,12 @@ func (c *Client) FetchAll(ctx context.Context) (*Resources, error) {
 		return nil, fmt.Errorf("listing projects: %w", err)
 	}
 
-	groupMembers, err := c.ListGroupMembers(ctx, groups)
-	if err != nil {
-		return nil, fmt.Errorf("listing group members: %w", err)
+	var groupMembers GroupMembers
+	if !skipSet.Has("memberships") {
+		groupMembers, err = c.ListGroupMembers(ctx, groups)
+		if err != nil {
+			return nil, fmt.Errorf("listing group members: %w", err)
+		}
 	}
 
 	return &Resources{

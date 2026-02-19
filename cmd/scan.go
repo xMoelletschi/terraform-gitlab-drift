@@ -9,13 +9,15 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
+	"github.com/xMoelletschi/terraform-gitlab-drift/internal/skip"
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/terraform"
 )
 
 var (
-	createMR  bool
-	overwrite bool
-	showDiff  bool
+	createMR      bool
+	overwrite     bool
+	showDiff      bool
+	skipResources []string
 )
 
 var scanCmd = &cobra.Command{
@@ -29,6 +31,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&createMR, "create-mr", false, "[TODO:WIP] Create a merge request with generated Terraform code")
 	scanCmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite files in terraform directory (default: write to tmp/ subdirectory)")
 	scanCmd.Flags().BoolVar(&showDiff, "show-diff", true, "Show diff between generated and existing files")
+	scanCmd.Flags().StringSliceVar(&skipResources, "skip", nil, "Resource types to skip (comma-separated). Use 'premium' to skip all Premium-tier resources")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -43,6 +46,18 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	if gitlabGroup == "" && gitlabURL == defaultGitLabURL {
 		return fmt.Errorf("--group is required when using gitlab.com, specify your top-level group")
+	}
+
+	skipSet, skipWarnings := skip.Parse(skipResources)
+	for _, w := range skipWarnings {
+		slog.Warn("unknown skip value, ignoring", "name", w)
+	}
+	if len(skipSet) > 0 {
+		skipped := make([]string, 0, len(skipSet))
+		for k := range skipSet {
+			skipped = append(skipped, k)
+		}
+		slog.Info("skipping resource types", "skipped", skipped)
 	}
 
 	slog.Info("scanning for unmanaged GitLab resources",
@@ -60,7 +75,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	slog.Debug("fetching resources from GitLab API")
 
 	// Fetch resources from GitLab API
-	resources, err := client.FetchAll(ctx)
+	resources, err := client.FetchAll(ctx, skipSet)
 	if err != nil {
 		return fmt.Errorf("fetching resources: %w", err)
 	}
@@ -90,7 +105,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := terraform.WriteAll(resources, outputDir, gitlabGroup); err != nil {
+	if err := terraform.WriteAll(resources, outputDir, gitlabGroup, skipSet); err != nil {
 		return fmt.Errorf("writing terraform files: %w", err)
 	}
 
