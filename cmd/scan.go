@@ -97,21 +97,19 @@ func runScan(cmd *cobra.Command, args []string) error {
 		"project_share_groups", projectShareGroupCount,
 	)
 
-	outputDir := terraformDir
-	if !overwrite {
-		outputDir = filepath.Join(terraformDir, "tmp")
-		if err := os.MkdirAll(outputDir, 0755); err != nil {
-			return fmt.Errorf("creating tmp directory: %w", err)
-		}
+	outputDir := filepath.Join(terraformDir, "tmp")
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("creating tmp directory: %w", err)
 	}
 
 	if err := terraform.WriteAll(resources, outputDir, gitlabGroup, skipSet); err != nil {
 		return fmt.Errorf("writing terraform files: %w", err)
 	}
 
-	slog.Info("wrote terraform files", "dir", outputDir, "overwrite", overwrite)
+	slog.Info("wrote terraform files", "dir", outputDir)
 
 	// Compare generated .tf files with existing ones using diff command
+	driftFound := false
 	if showDiff {
 		slog.Info("comparing files", "existing", terraformDir, "generated", outputDir)
 
@@ -120,7 +118,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("listing generated files: %w", err)
 		}
 
-		driftFound := false
 		for _, genFile := range files {
 			base := filepath.Base(genFile)
 			existingFile := filepath.Join(terraformDir, base)
@@ -150,12 +147,33 @@ func runScan(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf("running diff command for %s: %w", base, err)
 			}
 		}
+	}
 
-		if driftFound {
-			slog.Warn("drift detected")
-			os.Exit(1)
+	// If --overwrite, copy generated files from tmp/ to the terraform directory
+	if overwrite {
+		files, err := filepath.Glob(filepath.Join(outputDir, "*.tf"))
+		if err != nil {
+			return fmt.Errorf("listing generated files: %w", err)
 		}
+		for _, src := range files {
+			data, err := os.ReadFile(src)
+			if err != nil {
+				return fmt.Errorf("reading file %s: %w", src, err)
+			}
+			dst := filepath.Join(terraformDir, filepath.Base(src))
+			if err := os.WriteFile(dst, data, 0644); err != nil {
+				return fmt.Errorf("writing file %s: %w", dst, err)
+			}
+		}
+		slog.Info("overwrote terraform files", "dir", terraformDir)
+	}
 
+	if driftFound {
+		slog.Warn("drift detected")
+		os.Exit(1)
+	}
+
+	if showDiff {
 		slog.Info("no drift detected")
 	}
 
