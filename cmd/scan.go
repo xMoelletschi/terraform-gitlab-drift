@@ -149,6 +149,17 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Generate import commands for new resources
+	existingResources, err := terraform.ParseExistingResources(terraformDir)
+	if err != nil {
+		return fmt.Errorf("parsing existing terraform files: %w", err)
+	}
+	importCmds := terraform.GenerateImportCommands(resources, existingResources, gitlabGroup, skipSet)
+	if len(importCmds) > 0 {
+		fmt.Fprintln(os.Stdout, "\nImport commands for new resources:")
+		terraform.PrintImportCommands(os.Stdout, importCmds)
+	}
+
 	// If --overwrite, copy generated files from tmp/ to the terraform directory
 	if overwrite {
 		files, err := filepath.Glob(filepath.Join(outputDir, "*.tf"))
