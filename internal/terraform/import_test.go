@@ -224,7 +224,9 @@ func TestPrintImportCommands(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	PrintImportCommands(&buf, cmds)
+	if err := PrintImportCommands(&buf, cmds); err != nil {
+		t.Fatalf("PrintImportCommands error: %v", err)
+	}
 
 	want := "terraform import 'gitlab_group.my_group' '10'\n" +
 		"terraform import 'gitlab_group_membership.my_group[\"alice\"]' '10:100'\n"

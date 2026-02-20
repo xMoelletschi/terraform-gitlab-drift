@@ -89,10 +89,13 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 }
 
 // PrintImportCommands writes terraform import commands to w.
-func PrintImportCommands(w io.Writer, cmds []ImportCommand) {
+func PrintImportCommands(w io.Writer, cmds []ImportCommand) error {
 	for _, cmd := range cmds {
-		fmt.Fprintf(w, "terraform import '%s' '%s'\n", cmd.Address, cmd.ID)
+		if _, err := fmt.Fprintf(w, "terraform import '%s' '%s'\n", cmd.Address, cmd.ID); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // projectResourceName computes the terraform resource name for a project,
