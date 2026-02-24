@@ -13,7 +13,9 @@ Uses the [GitLab Terraform Provider](https://registry.terraform.io/providers/git
 - 🔍 **Drift Detection**: Scan GitLab groups and projects to identify resources not managed by Terraform
 - 📝 **Code Generation**: Automatically generate Terraform code for unmanaged resources
 - 🔄 **Diff Comparison**: Show differences between existing and generated Terraform configurations
-- 🐳 **Docker-ready**: Designed for CI/CD pipeline
+- 📦 **Import Commands**: Generate `terraform import` commands for new resources
+- 🔀 **Merge Request Creation**: Automatically create or update GitLab MRs with generated `.tf` files
+- 🐳 **Docker-ready**: Designed for CI/CD pipelines
 
 ## Quick Start
 
@@ -35,6 +37,17 @@ drift-check:
     - terraform-gitlab-drift scan --group $CI_PROJECT_ROOT_NAMESPACE
 ```
 
+### Auto-create MR on Drift
+
+```yaml
+drift-remediation:
+  image: ghcr.io/xmoelletschi/terraform-gitlab-drift:latest
+  script:
+    - terraform-gitlab-drift scan --group $CI_PROJECT_ROOT_NAMESPACE --create-mr --show-diff=false
+```
+
+When drift is detected, this creates (or updates) a merge request in the current repository with the generated `.tf` files. The target repo is auto-detected from the git remote; use `--target-repo` to override.
+
 ## Configuration
 
 ### Command-line Flags
@@ -48,6 +61,10 @@ drift-check:
 | `--overwrite`     | -                    | `false`              | Overwrite files in terraform directory            |
 | `--show-diff`     | -                    | `true`               | Show diff between generated and existing files    |
 | `--skip`          | -                    | -                    | Resource types to skip (comma-separated). Use `premium` to skip all Premium-tier resources |
+| `--create-mr`     | -                    | `false`              | Create a merge request with generated Terraform code |
+| `--target-repo`   | -                    | *(auto-detected)*    | GitLab project path or ID for the MR              |
+| `--mr-branch`     | -                    | `drift/backtrack`    | Branch name for the drift MR                      |
+| `--mr-dest-path`  | -                    | *(root)*             | Path within target repo where `.tf` files go      |
 | `--verbose`, `-v` | -                    | `false`              | Enable verbose (debug) logging                    |
 | `--json`          | -                    | `false`              | Output logs in JSON format                        |
 

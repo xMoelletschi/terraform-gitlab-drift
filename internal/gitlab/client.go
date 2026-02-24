@@ -19,6 +19,10 @@ type Resources struct {
 	GroupMembers GroupMembers
 }
 
+func NewClientFromAPI(api *gl.Client, group string) *Client {
+	return &Client{api: api, group: group}
+}
+
 func NewClient(token, baseURL, group string) (*Client, error) {
 	client, err := gl.NewClient(token, gl.WithBaseURL(baseURL))
 	if err != nil {
