@@ -157,6 +157,24 @@ func TestEnsureBranch(t *testing.T) {
 		}
 	})
 
+	t.Run("creates branch on ErrNotFound", func(t *testing.T) {
+		tc := gitlabtesting.NewTestClient(t)
+		c := NewClientFromAPI(tc.Client, "mygroup")
+
+		tc.MockBranches.EXPECT().
+			GetBranch("mygroup/myproject", "drift/update-2025-01-01", gomock.Any()).
+			Return(nil, nil, gl.ErrNotFound)
+
+		tc.MockBranches.EXPECT().
+			CreateBranch("mygroup/myproject", gomock.Any(), gomock.Any()).
+			Return(&gl.Branch{Name: "drift/update-2025-01-01"}, nil, nil)
+
+		err := c.EnsureBranch(context.Background(), "mygroup/myproject", "drift/update-2025-01-01", "main")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
 	t.Run("propagates auth error", func(t *testing.T) {
 		tc := gitlabtesting.NewTestClient(t)
 		c := NewClientFromAPI(tc.Client, "mygroup")
@@ -189,6 +207,32 @@ func TestCommitDriftFiles(t *testing.T) {
 			Return(nil, nil, &gl.ErrorResponse{
 				Response: &http.Response{StatusCode: http.StatusNotFound},
 			})
+
+		tc.MockCommits.EXPECT().
+			CreateCommit("mygroup/myproject", gomock.Any(), gomock.Any()).
+			Return(&gl.Commit{ID: "abc123"}, nil, nil)
+
+		committed, err := c.CommitDriftFiles(context.Background(), "mygroup/myproject", "drift/update", dir, "")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !committed {
+			t.Error("expected commit to be created")
+		}
+	})
+
+	t.Run("creates new files with ErrNotFound", func(t *testing.T) {
+		tc := gitlabtesting.NewTestClient(t)
+		c := NewClientFromAPI(tc.Client, "mygroup")
+
+		dir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(dir, "groups.tf"), []byte("resource {}"), 0644); err != nil {
+			t.Fatal(err)
+		}
+
+		tc.MockRepositoryFiles.EXPECT().
+			GetRawFile("mygroup/myproject", "groups.tf", gomock.Any(), gomock.Any()).
+			Return(nil, nil, gl.ErrNotFound)
 
 		tc.MockCommits.EXPECT().
 			CreateCommit("mygroup/myproject", gomock.Any(), gomock.Any()).

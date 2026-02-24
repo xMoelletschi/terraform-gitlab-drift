@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -13,6 +12,16 @@ import (
 
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
+
+// isNotFound returns true if the error represents a 404 Not Found response.
+// It handles both the sentinel gl.ErrNotFound and the structured *gl.ErrorResponse.
+func isNotFound(err error) bool {
+	if errors.Is(err, gl.ErrNotFound) {
+		return true
+	}
+	var errResp *gl.ErrorResponse
+	return errors.As(err, &errResp) && errResp.Response.StatusCode == 404
+}
 
 // DriftMRResult holds the outcome of the MR creation/update workflow.
 type DriftMRResult struct {
@@ -67,8 +76,7 @@ func (c *Client) EnsureBranch(ctx context.Context, project, branchName, defaultB
 		return nil
 	}
 
-	var errResp *gl.ErrorResponse
-	if !errors.As(err, &errResp) || errResp.Response.StatusCode != http.StatusNotFound {
+	if !isNotFound(err) {
 		return fmt.Errorf("checking branch %s: %w", branchName, err)
 	}
 
@@ -112,8 +120,7 @@ func (c *Client) CommitDriftFiles(ctx context.Context, project, branchName, gene
 		}, gl.WithContext(ctx))
 
 		if err != nil {
-			var errResp *gl.ErrorResponse
-			if errors.As(err, &errResp) && errResp.Response.StatusCode == http.StatusNotFound {
+			if isNotFound(err) {
 				actions = append(actions, &gl.CommitActionOptions{
 					Action:   gl.Ptr(gl.FileCreate),
 					FilePath: gl.Ptr(remotePath),
