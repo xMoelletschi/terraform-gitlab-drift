@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
@@ -25,6 +24,7 @@ var (
 	skipResources []string
 	targetRepo    string
 	mrDestPath    string
+	mrBranch      string
 )
 
 var scanCmd = &cobra.Command{
@@ -41,6 +41,7 @@ func init() {
 	scanCmd.Flags().StringSliceVar(&skipResources, "skip", nil, "Resource types to skip (comma-separated). Use 'premium' to skip all Premium-tier resources")
 	scanCmd.Flags().StringVar(&targetRepo, "target-repo", "", "GitLab project path or ID for the MR (default: detected from git remote in --terraform-dir)")
 	scanCmd.Flags().StringVar(&mrDestPath, "mr-dest-path", "", "Path within target repo where .tf files go (default: root)")
+	scanCmd.Flags().StringVar(&mrBranch, "mr-branch", "drift/backtrack", "Branch name for the drift MR")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -248,7 +249,7 @@ func createDriftMR(ctx context.Context, client *gitlab.Client, project, outputDi
 		return nil, err
 	}
 
-	branchName := "drift/update-" + time.Now().Format("2006-01-02")
+	branchName := mrBranch
 	if existingMR != nil {
 		branchName = existingMR.SourceBranch
 	}

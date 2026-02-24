@@ -63,6 +63,7 @@ When drift is detected, this creates (or updates) a merge request in the current
 | `--skip`          | -                    | -                    | Resource types to skip (comma-separated). Use `premium` to skip all Premium-tier resources |
 | `--create-mr`     | -                    | `false`              | Create a merge request with generated Terraform code |
 | `--target-repo`   | -                    | *(auto-detected)*    | GitLab project path or ID for the MR              |
+| `--mr-branch`     | -                    | `drift/backtrack`    | Branch name for the drift MR                      |
 | `--mr-dest-path`  | -                    | *(root)*             | Path within target repo where `.tf` files go      |
 | `--verbose`, `-v` | -                    | `false`              | Enable verbose (debug) logging                    |
 | `--json`          | -                    | `false`              | Output logs in JSON format                        |
