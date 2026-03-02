@@ -11,6 +11,5 @@ variable "gitlab_group_label" {
         description = "Feature requests"
       }
     }
-    "my-group/sub-group" = {}
   }
 }

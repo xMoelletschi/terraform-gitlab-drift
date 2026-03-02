@@ -124,7 +124,7 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 						return err
 					}
 				}
-				if !skipSet.Has("labels") {
+				if !skipSet.Has("labels") && len(resources.GroupLabels[group.ID]) > 0 {
 					if err := WriteGroupLabelResource(group, w); err != nil {
 						return err
 					}
@@ -147,7 +147,7 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 							return err
 						}
 					}
-					if !skipSet.Has("labels") {
+					if !skipSet.Has("labels") && len(resources.ProjectLabels[p.ID]) > 0 {
 						if err := WriteProjectLabelResource(p, w); err != nil {
 							return err
 						}
