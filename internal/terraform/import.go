@@ -85,6 +85,42 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 		}
 	}
 
+	if !skipSet.Has("labels") {
+		for _, g := range resources.Groups {
+			if g == nil {
+				continue
+			}
+			name := normalizeToTerraformName(g.Path)
+			key := "gitlab_group_label." + name
+			if !existingResources[key] {
+				for _, l := range resources.GroupLabels[g.ID] {
+					cmds = append(cmds, ImportCommand{
+						Address: fmt.Sprintf("gitlab_group_label.%s[\"%s\"]", name, l.Name),
+						ID:      fmt.Sprintf("%d:%d", g.ID, l.ID),
+					})
+				}
+			}
+		}
+	}
+
+	if !skipSet.Has("labels") {
+		for _, p := range resources.Projects {
+			if p == nil {
+				continue
+			}
+			name := projectResourceName(p)
+			key := "gitlab_project_label." + name
+			if !existingResources[key] {
+				for _, l := range resources.ProjectLabels[p.ID] {
+					cmds = append(cmds, ImportCommand{
+						Address: fmt.Sprintf("gitlab_project_label.%s[\"%s\"]", name, l.Name),
+						ID:      fmt.Sprintf("%d:%d", p.ID, l.ID),
+					})
+				}
+			}
+		}
+	}
+
 	return cmds
 }
 

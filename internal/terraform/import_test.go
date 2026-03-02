@@ -217,6 +217,118 @@ func TestGenerateImportCommandsAllExisting(t *testing.T) {
 	}
 }
 
+func TestGenerateImportCommandsNewGroupLabel(t *testing.T) {
+	resources := &gitlab.Resources{
+		Groups: []*gl.Group{
+			{ID: 10, Path: "my-group", FullPath: "my-group"},
+		},
+		GroupLabels: map[int64][]*gl.GroupLabel{
+			10: {
+				{ID: 100, Name: "bug"},
+				{ID: 200, Name: "feature"},
+			},
+		},
+	}
+
+	// Group itself exists, but label resource does not.
+	existing := map[string]bool{
+		"gitlab_group.my_group": true,
+	}
+
+	cmds := GenerateImportCommands(resources, existing, "my-group", nil)
+
+	if len(cmds) != 2 {
+		t.Fatalf("expected 2 commands, got %d", len(cmds))
+	}
+	if cmds[0].Address != `gitlab_group_label.my_group["bug"]` {
+		t.Errorf("address = %q, want %q", cmds[0].Address, `gitlab_group_label.my_group["bug"]`)
+	}
+	if cmds[0].ID != "10:100" {
+		t.Errorf("id = %q, want %q", cmds[0].ID, "10:100")
+	}
+	if cmds[1].Address != `gitlab_group_label.my_group["feature"]` {
+		t.Errorf("address = %q, want %q", cmds[1].Address, `gitlab_group_label.my_group["feature"]`)
+	}
+	if cmds[1].ID != "10:200" {
+		t.Errorf("id = %q, want %q", cmds[1].ID, "10:200")
+	}
+}
+
+func TestGenerateImportCommandsNewProjectLabel(t *testing.T) {
+	resources := &gitlab.Resources{
+		Projects: []*gl.Project{
+			{
+				ID:   1,
+				Path: "my-project",
+				Namespace: &gl.ProjectNamespace{
+					FullPath: "parent",
+				},
+			},
+		},
+		ProjectLabels: map[int64][]*gl.Label{
+			1: {
+				{ID: 500, Name: "severity::1"},
+			},
+		},
+	}
+
+	// Project exists, but label resource does not.
+	existing := map[string]bool{
+		"gitlab_project.parent_my_project": true,
+	}
+
+	cmds := GenerateImportCommands(resources, existing, "parent", nil)
+
+	if len(cmds) != 1 {
+		t.Fatalf("expected 1 command, got %d", len(cmds))
+	}
+	if cmds[0].Address != `gitlab_project_label.parent_my_project["severity::1"]` {
+		t.Errorf("address = %q, want %q", cmds[0].Address, `gitlab_project_label.parent_my_project["severity::1"]`)
+	}
+	if cmds[0].ID != "1:500" {
+		t.Errorf("id = %q, want %q", cmds[0].ID, "1:500")
+	}
+}
+
+func TestGenerateImportCommandsSkipLabels(t *testing.T) {
+	resources := &gitlab.Resources{
+		Groups: []*gl.Group{
+			{ID: 10, Path: "grp", FullPath: "grp"},
+		},
+		Projects: []*gl.Project{
+			{
+				ID:   1,
+				Path: "proj",
+				Namespace: &gl.ProjectNamespace{
+					FullPath: "grp",
+				},
+			},
+		},
+		GroupLabels: map[int64][]*gl.GroupLabel{
+			10: {{ID: 100, Name: "bug"}},
+		},
+		ProjectLabels: map[int64][]*gl.Label{
+			1: {{ID: 200, Name: "feature"}},
+		},
+	}
+
+	skipSet := skip.Set{"labels": true}
+	cmds := GenerateImportCommands(resources, nil, "grp", skipSet)
+
+	// Should only have group + project imports, no labels.
+	for _, cmd := range cmds {
+		if cmd.Address == `gitlab_group_label.grp["bug"]` {
+			t.Error("should not generate group label import when labels skipped")
+		}
+		if cmd.Address == `gitlab_project_label.grp_proj["feature"]` {
+			t.Error("should not generate project label import when labels skipped")
+		}
+	}
+	if len(cmds) != 2 {
+		t.Errorf("expected 2 commands (group + project), got %d", len(cmds))
+	}
+}
+
 func TestPrintImportCommands(t *testing.T) {
 	cmds := []ImportCommand{
 		{Address: "gitlab_group.my_group", ID: "10"},

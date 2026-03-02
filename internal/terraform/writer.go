@@ -86,6 +86,24 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 		}
 	}
 
+	// Write group_labels.tf with variable
+	if !skipSet.Has("labels") {
+		if err := writeFile(filepath.Join(dir, "group_labels.tf"), func(w io.Writer) error {
+			return WriteGroupLabelVariable(resources.Groups, resources.GroupLabels, w)
+		}); err != nil {
+			errs = append(errs, fmt.Errorf("group_labels.tf: %w", err))
+		}
+	}
+
+	// Write project_labels.tf with variable
+	if !skipSet.Has("labels") {
+		if err := writeFile(filepath.Join(dir, "project_labels.tf"), func(w io.Writer) error {
+			return WriteProjectLabelVariable(resources.Projects, resources.ProjectLabels, w)
+		}); err != nil {
+			errs = append(errs, fmt.Errorf("project_labels.tf: %w", err))
+		}
+	}
+
 	// Write one file per namespace: group → group membership resource → projects → project share group resources
 	for ns := range allNamespaces {
 		trimmedNs := strings.TrimPrefix(ns, mainGroup+"/")
@@ -106,6 +124,11 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 						return err
 					}
 				}
+				if !skipSet.Has("labels") {
+					if err := WriteGroupLabelResource(group, w); err != nil {
+						return err
+					}
+				}
 				written = true
 			}
 
@@ -121,6 +144,11 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 					}
 					if !skipSet.Has("memberships") {
 						if err := WriteProjectShareGroupResource(p, w); err != nil {
+							return err
+						}
+					}
+					if !skipSet.Has("labels") {
+						if err := WriteProjectLabelResource(p, w); err != nil {
 							return err
 						}
 					}

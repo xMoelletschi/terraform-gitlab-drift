@@ -117,6 +117,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 	)
 
 	outputDir := filepath.Join(terraformDir, "tmp")
+	if err := os.RemoveAll(outputDir); err != nil {
+		return fmt.Errorf("cleaning tmp directory: %w", err)
+	}
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("creating tmp directory: %w", err)
 	}
