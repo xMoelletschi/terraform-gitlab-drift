@@ -23,17 +23,16 @@ func WriteGroupLabelVariable(groups []*gl.Group, groupLabels gitlab.GroupLabels,
 		}
 		labels := groupLabels[g.ID]
 		if len(labels) == 0 {
-			fmt.Fprintf(&b, "    \"%s\" = {}\n", g.FullPath)
-		} else {
-			fmt.Fprintf(&b, "    \"%s\" = {\n", g.FullPath)
-			for _, l := range labels {
-				fmt.Fprintf(&b, "      \"%s\" = {\n", l.Name)
-				fmt.Fprintf(&b, "        color       = \"%s\"\n", l.Color)
-				fmt.Fprintf(&b, "        description = \"%s\"\n", l.Description)
-				b.WriteString("      }\n")
-			}
-			b.WriteString("    }\n")
+			continue
 		}
+		fmt.Fprintf(&b, "    \"%s\" = {\n", g.FullPath)
+		for _, l := range labels {
+			fmt.Fprintf(&b, "      \"%s\" = {\n", l.Name)
+			fmt.Fprintf(&b, "        color       = \"%s\"\n", l.Color)
+			fmt.Fprintf(&b, "        description = \"%s\"\n", l.Description)
+			b.WriteString("      }\n")
+		}
+		b.WriteString("    }\n")
 	}
 
 	b.WriteString("  }\n")
@@ -69,17 +68,16 @@ func WriteProjectLabelVariable(projects []*gl.Project, projectLabels gitlab.Proj
 		path := projectFullPath(p)
 		labels := projectLabels[p.ID]
 		if len(labels) == 0 {
-			fmt.Fprintf(&b, "    \"%s\" = {}\n", path)
-		} else {
-			fmt.Fprintf(&b, "    \"%s\" = {\n", path)
-			for _, l := range labels {
-				fmt.Fprintf(&b, "      \"%s\" = {\n", l.Name)
-				fmt.Fprintf(&b, "        color       = \"%s\"\n", l.Color)
-				fmt.Fprintf(&b, "        description = \"%s\"\n", l.Description)
-				b.WriteString("      }\n")
-			}
-			b.WriteString("    }\n")
+			continue
 		}
+		fmt.Fprintf(&b, "    \"%s\" = {\n", path)
+		for _, l := range labels {
+			fmt.Fprintf(&b, "      \"%s\" = {\n", l.Name)
+			fmt.Fprintf(&b, "        color       = \"%s\"\n", l.Color)
+			fmt.Fprintf(&b, "        description = \"%s\"\n", l.Description)
+			b.WriteString("      }\n")
+		}
+		b.WriteString("    }\n")
 	}
 
 	b.WriteString("  }\n")

@@ -7,6 +7,5 @@ variable "gitlab_project_label" {
         description = "Urgent issues"
       }
     }
-    "my-group/other-project" = {}
   }
 }
