@@ -80,6 +80,8 @@ terraform/
 ├── my_group_sub_group.tf   # generated: sub-group + its projects
 ├── group_membership.tf     # generated: variable with group → user memberships
 ├── project_membership.tf   # generated: variable with project → shared groups
+├── group_labels.tf         # generated: variable with group → labels
+├── project_labels.tf       # generated: variable with project → labels
 └── ...
 ```
 
@@ -96,6 +98,8 @@ terraform/
 - ✅ GitLab Group Memberships ([`gitlab_group_membership`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/group_membership))
 - ✅ GitLab Projects ([`gitlab_project`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project))
 - ✅ GitLab Project Share Groups ([`gitlab_project_share_group`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_share_group))
+- ✅ GitLab Group Labels ([`gitlab_group_label`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/group_label))
+- ✅ GitLab Project Labels ([`gitlab_project_label`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_label))
 - 🚧 More resources coming soon
 
 ## Contributing

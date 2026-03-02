@@ -14,9 +14,11 @@ type Client struct {
 }
 
 type Resources struct {
-	Groups       []*gl.Group
-	Projects     []*gl.Project
-	GroupMembers GroupMembers
+	Groups        []*gl.Group
+	Projects      []*gl.Project
+	GroupMembers  GroupMembers
+	GroupLabels   GroupLabels
+	ProjectLabels ProjectLabels
 }
 
 func NewClientFromAPI(api *gl.Client, group string) *Client {
@@ -50,9 +52,24 @@ func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, er
 		}
 	}
 
+	var groupLabels GroupLabels
+	var projectLabels ProjectLabels
+	if !skipSet.Has("labels") {
+		groupLabels, err = c.ListGroupLabels(ctx, groups)
+		if err != nil {
+			return nil, fmt.Errorf("listing group labels: %w", err)
+		}
+		projectLabels, err = c.ListProjectLabels(ctx, projects)
+		if err != nil {
+			return nil, fmt.Errorf("listing project labels: %w", err)
+		}
+	}
+
 	return &Resources{
-		Groups:       groups,
-		Projects:     projects,
-		GroupMembers: groupMembers,
+		Groups:        groups,
+		Projects:      projects,
+		GroupMembers:  groupMembers,
+		GroupLabels:   groupLabels,
+		ProjectLabels: projectLabels,
 	}, nil
 }
