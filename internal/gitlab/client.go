@@ -15,11 +15,12 @@ type Client struct {
 }
 
 type Resources struct {
-	Groups        []*gl.Group
-	Projects      []*gl.Project
-	GroupMembers  GroupMembers
-	GroupLabels   GroupLabels
-	ProjectLabels ProjectLabels
+	Groups            []*gl.Group
+	Projects          []*gl.Project
+	GroupMembers      GroupMembers
+	GroupLabels       GroupLabels
+	ProjectLabels     ProjectLabels
+	PipelineSchedules PipelineSchedules
 }
 
 func NewClientFromAPI(api *gl.Client, group string) *Client {
@@ -72,11 +73,21 @@ func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, er
 		slog.Info("fetched project labels", "count", len(projectLabels))
 	}
 
+	var pipelineSchedules PipelineSchedules
+	if !skipSet.Has("schedules") {
+		pipelineSchedules, err = c.ListPipelineSchedules(ctx, projects)
+		if err != nil {
+			return nil, fmt.Errorf("listing pipeline schedules: %w", err)
+		}
+		slog.Info("fetched pipeline schedules", "count", len(pipelineSchedules))
+	}
+
 	return &Resources{
-		Groups:        groups,
-		Projects:      projects,
-		GroupMembers:  groupMembers,
-		GroupLabels:   groupLabels,
-		ProjectLabels: projectLabels,
+		Groups:            groups,
+		Projects:          projects,
+		GroupMembers:      groupMembers,
+		GroupLabels:       groupLabels,
+		ProjectLabels:     projectLabels,
+		PipelineSchedules: pipelineSchedules,
 	}, nil
 }

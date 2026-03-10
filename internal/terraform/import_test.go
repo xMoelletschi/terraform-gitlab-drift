@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
@@ -345,5 +346,79 @@ func TestPrintImportCommands(t *testing.T) {
 
 	if buf.String() != want {
 		t.Errorf("output mismatch:\ngot:\n%s\nwant:\n%s", buf.String(), want)
+	}
+}
+
+func TestGenerateImportCommandsNewPipelineSchedule(t *testing.T) {
+	resources := &gitlab.Resources{
+		Projects: []*gl.Project{
+			{
+				ID:   1,
+				Path: "my-project",
+				Namespace: &gl.ProjectNamespace{
+					FullPath: "parent",
+				},
+			},
+		},
+		PipelineSchedules: map[int64][]*gl.PipelineSchedule{
+			1: {
+				{
+					ID:          10,
+					Description: "Nightly build",
+					Variables: []*gl.PipelineVariable{
+						{Key: "DEPLOY_ENV", Value: "staging", VariableType: "env_var"},
+					},
+				},
+			},
+		},
+	}
+
+	existing := map[string]bool{
+		"gitlab_project.parent_my_project": true,
+	}
+
+	cmds := GenerateImportCommands(resources, existing, "parent", nil)
+
+	if len(cmds) != 2 {
+		t.Fatalf("expected 2 commands, got %d", len(cmds))
+	}
+	if cmds[0].Address != "gitlab_pipeline_schedule.parent_my_project_nightly_build" {
+		t.Errorf("address = %q, want %q", cmds[0].Address, "gitlab_pipeline_schedule.parent_my_project_nightly_build")
+	}
+	if cmds[0].ID != "1:10" {
+		t.Errorf("id = %q, want %q", cmds[0].ID, "1:10")
+	}
+	if cmds[1].Address != "gitlab_pipeline_schedule_variable.parent_my_project_nightly_build_deploy_env" {
+		t.Errorf("address = %q, want %q", cmds[1].Address, "gitlab_pipeline_schedule_variable.parent_my_project_nightly_build_deploy_env")
+	}
+	if cmds[1].ID != "1:10:DEPLOY_ENV" {
+		t.Errorf("id = %q, want %q", cmds[1].ID, "1:10:DEPLOY_ENV")
+	}
+}
+
+func TestGenerateImportCommandsSkipPipelineSchedules(t *testing.T) {
+	resources := &gitlab.Resources{
+		Groups: []*gl.Group{
+			{ID: 10, Path: "grp", FullPath: "grp"},
+		},
+		Projects: []*gl.Project{
+			{
+				ID:   1,
+				Path: "proj",
+				Namespace: &gl.ProjectNamespace{FullPath: "grp"},
+			},
+		},
+		PipelineSchedules: map[int64][]*gl.PipelineSchedule{
+			1: {{ID: 10, Description: "Nightly"}},
+		},
+	}
+
+	skipSet := skip.Set{"schedules": true}
+	cmds := GenerateImportCommands(resources, nil, "grp", skipSet)
+
+	for _, cmd := range cmds {
+		if strings.Contains(cmd.Address, "pipeline_schedule") {
+			t.Errorf("should not generate pipeline schedule import when skipped: %s", cmd.Address)
+		}
 	}
 }
