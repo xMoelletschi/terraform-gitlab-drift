@@ -82,6 +82,7 @@ terraform/
 ├── project_membership.tf   # generated: variable with project → shared groups
 ├── group_labels.tf         # generated: variable with group → labels
 ├── project_labels.tf       # generated: variable with project → labels
+├── pipeline_schedules.tf   # generated: variable with project → pipeline schedules
 └── ...
 ```
 
@@ -100,6 +101,8 @@ terraform/
 - ✅ GitLab Project Share Groups ([`gitlab_project_share_group`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_share_group))
 - ✅ GitLab Group Labels ([`gitlab_group_label`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/group_label))
 - ✅ GitLab Project Labels ([`gitlab_project_label`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_label))
+- ✅ GitLab Pipeline Schedules ([`gitlab_pipeline_schedule`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/pipeline_schedule))
+- ✅ GitLab Pipeline Schedule Variables ([`gitlab_pipeline_schedule_variable`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/pipeline_schedule_variable))
 - 🚧 More resources coming soon
 
 ## Contributing

@@ -13,12 +13,8 @@ import (
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
 
-func normalizeToTerraformName(path string) string {
-	normalized := strings.ToLower(path)
-	normalized = strings.ReplaceAll(normalized, "/", "_")
-	normalized = strings.ReplaceAll(normalized, "-", "_")
-
-	return normalized
+func normalizeToTerraformName(s string) string {
+	return normalizeName(s)
 }
 
 func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet skip.Set) error {
@@ -101,6 +97,32 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 			return WriteProjectLabelVariable(resources.Projects, resources.ProjectLabels, w)
 		}); err != nil {
 			errs = append(errs, fmt.Errorf("project_labels.tf: %w", err))
+		}
+	}
+
+	// Write pipeline_schedules.tf with individual resource blocks
+	if !skipSet.Has("schedules") {
+		if err := writeFile(filepath.Join(dir, "pipeline_schedules.tf"), func(w io.Writer) error {
+			first := true
+			for _, p := range resources.Projects {
+				if p == nil {
+					continue
+				}
+				if scheds := resources.PipelineSchedules[p.ID]; len(scheds) > 0 {
+					if !first {
+						if _, err := w.Write([]byte("\n")); err != nil {
+							return err
+						}
+					}
+					if err := WritePipelineSchedules(p, scheds, w); err != nil {
+						return err
+					}
+					first = false
+				}
+			}
+			return nil
+		}); err != nil {
+			errs = append(errs, fmt.Errorf("pipeline_schedules.tf: %w", err))
 		}
 	}
 

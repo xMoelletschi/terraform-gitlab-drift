@@ -16,7 +16,7 @@ var ResourceTypes = []string{
 	"variables",
 	"approval_rules",
 	"mr_approvals",
-	"pipeline_schedules",
+	"schedules",
 	"branch_protection",
 	"service_accounts",
 }

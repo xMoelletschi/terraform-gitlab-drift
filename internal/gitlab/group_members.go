@@ -3,6 +3,7 @@ package gitlab
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
@@ -17,6 +18,7 @@ func (c *Client) ListGroupMembers(ctx context.Context, groups []*gl.Group) (Grou
 		if g == nil {
 			continue
 		}
+		slog.Debug("fetching group members", "group", g.FullPath)
 		opts := &gl.ListGroupMembersOptions{
 			ListOptions: gl.ListOptions{
 				Page:    1,

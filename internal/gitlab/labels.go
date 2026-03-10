@@ -3,6 +3,7 @@ package gitlab
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
@@ -21,6 +22,7 @@ func (c *Client) ListGroupLabels(ctx context.Context, groups []*gl.Group) (Group
 		if g == nil {
 			continue
 		}
+		slog.Debug("fetching group labels", "group", g.FullPath)
 		opts := &gl.ListGroupLabelsOptions{
 			ListOptions: gl.ListOptions{
 				Page:    1,
@@ -62,6 +64,7 @@ func (c *Client) ListProjectLabels(ctx context.Context, projects []*gl.Project) 
 		if p == nil {
 			continue
 		}
+		slog.Debug("fetching project labels", "project", p.PathWithNamespace)
 		opts := &gl.ListLabelsOptions{
 			ListOptions: gl.ListOptions{
 				Page:    1,
