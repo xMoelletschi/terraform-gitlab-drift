@@ -3,6 +3,7 @@ package gitlab
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
@@ -11,6 +12,7 @@ func (c *Client) ListGroups(ctx context.Context) ([]*gl.Group, error) {
 	var allGroups []*gl.Group
 
 	if c.group != "" {
+		slog.Debug("fetching groups", "group", c.group)
 		// First, fetch the main group itself
 		mainGroup, _, err := c.api.Groups.GetGroup(c.group, nil, gl.WithContext(ctx))
 		if err != nil {
