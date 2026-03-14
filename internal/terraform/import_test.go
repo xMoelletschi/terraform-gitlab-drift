@@ -396,6 +396,100 @@ func TestGenerateImportCommandsNewPipelineSchedule(t *testing.T) {
 	}
 }
 
+func TestGenerateImportCommandsNewProjectHook(t *testing.T) {
+	resources := &gitlab.Resources{
+		Projects: []*gl.Project{
+			{
+				ID:   1,
+				Path: "my-project",
+				Namespace: &gl.ProjectNamespace{
+					FullPath: "parent",
+				},
+			},
+		},
+		ProjectHooks: map[int64][]*gl.ProjectHook{
+			1: {
+				{ID: 50, URL: "https://hooks.slack.com/services/T123"},
+			},
+		},
+	}
+
+	existing := map[string]bool{
+		"gitlab_project.parent_my_project": true,
+	}
+
+	cmds := GenerateImportCommands(resources, existing, "parent", nil)
+
+	if len(cmds) != 1 {
+		t.Fatalf("expected 1 command, got %d", len(cmds))
+	}
+	if cmds[0].Address != "gitlab_project_hook.parent_my_project_hooks_slack_com_services_t123" {
+		t.Errorf("address = %q, want %q", cmds[0].Address, "gitlab_project_hook.parent_my_project_hooks_slack_com_services_t123")
+	}
+	if cmds[0].ID != "1:50" {
+		t.Errorf("id = %q, want %q", cmds[0].ID, "1:50")
+	}
+}
+
+func TestGenerateImportCommandsNewGroupHook(t *testing.T) {
+	resources := &gitlab.Resources{
+		Groups: []*gl.Group{
+			{ID: 10, Path: "my-group", FullPath: "my-group"},
+		},
+		GroupHooks: map[int64][]*gl.GroupHook{
+			10: {
+				{ID: 60, URL: "https://example.com/webhook"},
+			},
+		},
+	}
+
+	existing := map[string]bool{
+		"gitlab_group.my_group": true,
+	}
+
+	cmds := GenerateImportCommands(resources, existing, "my-group", nil)
+
+	if len(cmds) != 1 {
+		t.Fatalf("expected 1 command, got %d", len(cmds))
+	}
+	if cmds[0].Address != "gitlab_group_hook.my_group_example_com_webhook" {
+		t.Errorf("address = %q, want %q", cmds[0].Address, "gitlab_group_hook.my_group_example_com_webhook")
+	}
+	if cmds[0].ID != "10:60" {
+		t.Errorf("id = %q, want %q", cmds[0].ID, "10:60")
+	}
+}
+
+func TestGenerateImportCommandsSkipHooks(t *testing.T) {
+	resources := &gitlab.Resources{
+		Groups: []*gl.Group{
+			{ID: 10, Path: "grp", FullPath: "grp"},
+		},
+		Projects: []*gl.Project{
+			{
+				ID:   1,
+				Path: "proj",
+				Namespace: &gl.ProjectNamespace{FullPath: "grp"},
+			},
+		},
+		ProjectHooks: map[int64][]*gl.ProjectHook{
+			1: {{ID: 50, URL: "https://example.com/hook"}},
+		},
+		GroupHooks: map[int64][]*gl.GroupHook{
+			10: {{ID: 60, URL: "https://example.com/hook"}},
+		},
+	}
+
+	skipSet := skip.Set{"hooks": true}
+	cmds := GenerateImportCommands(resources, nil, "grp", skipSet)
+
+	for _, cmd := range cmds {
+		if strings.Contains(cmd.Address, "_hook.") {
+			t.Errorf("should not generate hook import when skipped: %s", cmd.Address)
+		}
+	}
+}
+
 func TestGenerateImportCommandsSkipPipelineSchedules(t *testing.T) {
 	resources := &gitlab.Resources{
 		Groups: []*gl.Group{

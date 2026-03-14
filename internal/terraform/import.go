@@ -121,6 +121,40 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 		}
 	}
 
+	if !skipSet.Has("hooks") {
+		for _, g := range resources.Groups {
+			if g == nil {
+				continue
+			}
+			for _, h := range resources.GroupHooks[g.ID] {
+				name := groupHookResourceName(g, h)
+				key := "gitlab_group_hook." + name
+				if !existingResources[key] {
+					cmds = append(cmds, ImportCommand{
+						Address: key,
+						ID:      fmt.Sprintf("%d:%d", g.ID, h.ID),
+					})
+				}
+			}
+		}
+
+		for _, p := range resources.Projects {
+			if p == nil {
+				continue
+			}
+			for _, h := range resources.ProjectHooks[p.ID] {
+				name := projectHookResourceName(p, h)
+				key := "gitlab_project_hook." + name
+				if !existingResources[key] {
+					cmds = append(cmds, ImportCommand{
+						Address: key,
+						ID:      fmt.Sprintf("%d:%d", p.ID, h.ID),
+					})
+				}
+			}
+		}
+	}
+
 	if !skipSet.Has("schedules") {
 		for _, p := range resources.Projects {
 			if p == nil {

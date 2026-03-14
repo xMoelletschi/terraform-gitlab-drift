@@ -83,6 +83,7 @@ terraform/
 ├── group_labels.tf         # generated: variable with group → labels
 ├── project_labels.tf       # generated: variable with project → labels
 ├── pipeline_schedules.tf   # generated: variable with project → pipeline schedules
+├── hooks.tf                # generated: project and group webhooks
 └── ...
 ```
 
@@ -103,6 +104,8 @@ terraform/
 - ✅ GitLab Project Labels ([`gitlab_project_label`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_label))
 - ✅ GitLab Pipeline Schedules ([`gitlab_pipeline_schedule`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/pipeline_schedule))
 - ✅ GitLab Pipeline Schedule Variables ([`gitlab_pipeline_schedule_variable`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/pipeline_schedule_variable))
+- ✅ GitLab Project Hooks ([`gitlab_project_hook`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_hook))
+- ✅ GitLab Group Hooks ([`gitlab_group_hook`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/group_hook)) *(requires Premium/Ultimate)*
 - 🚧 More resources coming soon
 
 ## Contributing
