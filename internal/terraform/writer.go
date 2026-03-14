@@ -126,6 +126,48 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 		}
 	}
 
+	// Write hooks.tf with individual resource blocks
+	if !skipSet.Has("hooks") {
+		if err := writeFile(filepath.Join(dir, "hooks.tf"), func(w io.Writer) error {
+			first := true
+			for _, g := range resources.Groups {
+				if g == nil {
+					continue
+				}
+				if hooks := resources.GroupHooks[g.ID]; len(hooks) > 0 {
+					if !first {
+						if _, err := w.Write([]byte("\n")); err != nil {
+							return err
+						}
+					}
+					if err := WriteGroupHooks(g, hooks, w); err != nil {
+						return err
+					}
+					first = false
+				}
+			}
+			for _, p := range resources.Projects {
+				if p == nil {
+					continue
+				}
+				if hooks := resources.ProjectHooks[p.ID]; len(hooks) > 0 {
+					if !first {
+						if _, err := w.Write([]byte("\n")); err != nil {
+							return err
+						}
+					}
+					if err := WriteProjectHooks(p, hooks, w); err != nil {
+						return err
+					}
+					first = false
+				}
+			}
+			return nil
+		}); err != nil {
+			errs = append(errs, fmt.Errorf("hooks.tf: %w", err))
+		}
+	}
+
 	// Write one file per namespace: group → group membership resource → projects → project share group resources
 	for ns := range allNamespaces {
 		trimmedNs := strings.TrimPrefix(ns, mainGroup+"/")
