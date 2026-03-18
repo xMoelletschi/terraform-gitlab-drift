@@ -23,6 +23,8 @@ type Resources struct {
 	PipelineSchedules PipelineSchedules
 	ProjectHooks      ProjectHooks
 	GroupHooks        GroupHooks
+	ProjectVariables  ProjectVariables
+	GroupVariables    GroupVariables
 }
 
 func NewClientFromAPI(api *gl.Client, group string) *Client {
@@ -84,6 +86,22 @@ func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, er
 		slog.Info("fetched pipeline schedules", "count", len(pipelineSchedules))
 	}
 
+	var projectVariables ProjectVariables
+	var groupVariables GroupVariables
+	if !skipSet.Has("variables") {
+		groupVariables, err = c.ListGroupVariables(ctx, groups)
+		if err != nil {
+			return nil, fmt.Errorf("listing group variables: %w", err)
+		}
+		slog.Info("fetched group variables", "count", len(groupVariables))
+
+		projectVariables, err = c.ListProjectVariables(ctx, projects)
+		if err != nil {
+			return nil, fmt.Errorf("listing project variables: %w", err)
+		}
+		slog.Info("fetched project variables", "count", len(projectVariables))
+	}
+
 	var projectHooks ProjectHooks
 	var groupHooks GroupHooks
 	if !skipSet.Has("hooks") {
@@ -109,5 +127,7 @@ func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, er
 		PipelineSchedules: pipelineSchedules,
 		ProjectHooks:      projectHooks,
 		GroupHooks:        groupHooks,
+		ProjectVariables:  projectVariables,
+		GroupVariables:    groupVariables,
 	}, nil
 }
