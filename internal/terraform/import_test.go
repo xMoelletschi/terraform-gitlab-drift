@@ -490,6 +490,107 @@ func TestGenerateImportCommandsSkipHooks(t *testing.T) {
 	}
 }
 
+func TestGenerateImportCommandsNewGroupVariable(t *testing.T) {
+	resources := &gitlab.Resources{
+		Groups: []*gl.Group{
+			{ID: 10, Path: "my-group", FullPath: "my-group"},
+		},
+		GroupVariables: map[int64][]*gl.GroupVariable{
+			10: {
+				{Key: "API_URL", EnvironmentScope: "*"},
+				{Key: "DB_HOST", EnvironmentScope: "production"},
+			},
+		},
+	}
+
+	existing := map[string]bool{
+		"gitlab_group.my_group": true,
+	}
+
+	cmds := GenerateImportCommands(resources, existing, "my-group", nil)
+
+	if len(cmds) != 2 {
+		t.Fatalf("expected 2 commands, got %d", len(cmds))
+	}
+	if cmds[0].Address != "gitlab_group_variable.my_group_api_url" {
+		t.Errorf("address = %q, want %q", cmds[0].Address, "gitlab_group_variable.my_group_api_url")
+	}
+	if cmds[0].ID != "10:API_URL:*" {
+		t.Errorf("id = %q, want %q", cmds[0].ID, "10:API_URL:*")
+	}
+	if cmds[1].Address != "gitlab_group_variable.my_group_db_host_production" {
+		t.Errorf("address = %q, want %q", cmds[1].Address, "gitlab_group_variable.my_group_db_host_production")
+	}
+	if cmds[1].ID != "10:DB_HOST:production" {
+		t.Errorf("id = %q, want %q", cmds[1].ID, "10:DB_HOST:production")
+	}
+}
+
+func TestGenerateImportCommandsNewProjectVariable(t *testing.T) {
+	resources := &gitlab.Resources{
+		Projects: []*gl.Project{
+			{
+				ID:   1,
+				Path: "my-project",
+				Namespace: &gl.ProjectNamespace{
+					FullPath: "parent",
+				},
+			},
+		},
+		ProjectVariables: map[int64][]*gl.ProjectVariable{
+			1: {
+				{Key: "SECRET_KEY", EnvironmentScope: "*"},
+			},
+		},
+	}
+
+	existing := map[string]bool{
+		"gitlab_project.parent_my_project": true,
+	}
+
+	cmds := GenerateImportCommands(resources, existing, "parent", nil)
+
+	if len(cmds) != 1 {
+		t.Fatalf("expected 1 command, got %d", len(cmds))
+	}
+	if cmds[0].Address != "gitlab_project_variable.parent_my_project_secret_key" {
+		t.Errorf("address = %q, want %q", cmds[0].Address, "gitlab_project_variable.parent_my_project_secret_key")
+	}
+	if cmds[0].ID != "1:SECRET_KEY:*" {
+		t.Errorf("id = %q, want %q", cmds[0].ID, "1:SECRET_KEY:*")
+	}
+}
+
+func TestGenerateImportCommandsSkipVariables(t *testing.T) {
+	resources := &gitlab.Resources{
+		Groups: []*gl.Group{
+			{ID: 10, Path: "grp", FullPath: "grp"},
+		},
+		Projects: []*gl.Project{
+			{
+				ID:   1,
+				Path: "proj",
+				Namespace: &gl.ProjectNamespace{FullPath: "grp"},
+			},
+		},
+		GroupVariables: map[int64][]*gl.GroupVariable{
+			10: {{Key: "VAR1", EnvironmentScope: "*"}},
+		},
+		ProjectVariables: map[int64][]*gl.ProjectVariable{
+			1: {{Key: "VAR2", EnvironmentScope: "*"}},
+		},
+	}
+
+	skipSet := skip.Set{"variables": true}
+	cmds := GenerateImportCommands(resources, nil, "grp", skipSet)
+
+	for _, cmd := range cmds {
+		if strings.Contains(cmd.Address, "_variable.") {
+			t.Errorf("should not generate variable import when skipped: %s", cmd.Address)
+		}
+	}
+}
+
 func TestGenerateImportCommandsSkipPipelineSchedules(t *testing.T) {
 	resources := &gitlab.Resources{
 		Groups: []*gl.Group{

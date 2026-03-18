@@ -100,6 +100,48 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 		}
 	}
 
+	// Write ci_variables.tf with individual resource blocks
+	if !skipSet.Has("variables") {
+		if err := writeFile(filepath.Join(dir, "ci_variables.tf"), func(w io.Writer) error {
+			first := true
+			for _, g := range resources.Groups {
+				if g == nil {
+					continue
+				}
+				if vars := resources.GroupVariables[g.ID]; len(vars) > 0 {
+					if !first {
+						if _, err := w.Write([]byte("\n")); err != nil {
+							return err
+						}
+					}
+					if err := WriteGroupVariables(g, vars, w); err != nil {
+						return err
+					}
+					first = false
+				}
+			}
+			for _, p := range resources.Projects {
+				if p == nil {
+					continue
+				}
+				if vars := resources.ProjectVariables[p.ID]; len(vars) > 0 {
+					if !first {
+						if _, err := w.Write([]byte("\n")); err != nil {
+							return err
+						}
+					}
+					if err := WriteProjectVariables(p, vars, w); err != nil {
+						return err
+					}
+					first = false
+				}
+			}
+			return nil
+		}); err != nil {
+			errs = append(errs, fmt.Errorf("ci_variables.tf: %w", err))
+		}
+	}
+
 	// Write pipeline_schedules.tf with individual resource blocks
 	if !skipSet.Has("schedules") {
 		if err := writeFile(filepath.Join(dir, "pipeline_schedules.tf"), func(w io.Writer) error {
