@@ -38,6 +38,7 @@ func Parse(input []string) (Set, []string) {
 
 	for _, name := range input {
 		if members, ok := Groups[name]; ok {
+			set[name] = true
 			for _, m := range members {
 				set[m] = true
 			}

@@ -168,6 +168,33 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 		}
 	}
 
+	// Write branch_protections.tf with individual resource blocks
+	if !skipSet.Has("branch_protection") {
+		premium := !skipSet.Has("premium")
+		if err := writeFile(filepath.Join(dir, "branch_protections.tf"), func(w io.Writer) error {
+			first := true
+			for _, p := range resources.Projects {
+				if p == nil {
+					continue
+				}
+				if branches := resources.ProtectedBranches[p.ID]; len(branches) > 0 {
+					if !first {
+						if _, err := w.Write([]byte("\n")); err != nil {
+							return err
+						}
+					}
+					if err := WriteBranchProtections(p, branches, premium, w); err != nil {
+						return err
+					}
+					first = false
+				}
+			}
+			return nil
+		}); err != nil {
+			errs = append(errs, fmt.Errorf("branch_protections.tf: %w", err))
+		}
+	}
+
 	// Write hooks.tf with individual resource blocks
 	if !skipSet.Has("hooks") {
 		if err := writeFile(filepath.Join(dir, "hooks.tf"), func(w io.Writer) error {

@@ -25,6 +25,7 @@ type Resources struct {
 	GroupHooks        GroupHooks
 	ProjectVariables  ProjectVariables
 	GroupVariables    GroupVariables
+	ProtectedBranches ProtectedBranches
 }
 
 func NewClientFromAPI(api *gl.Client, group string) *Client {
@@ -102,6 +103,15 @@ func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, er
 		slog.Info("fetched project variables", "count", len(projectVariables))
 	}
 
+	var protectedBranches ProtectedBranches
+	if !skipSet.Has("branch_protection") {
+		protectedBranches, err = c.ListProtectedBranches(ctx, projects)
+		if err != nil {
+			return nil, fmt.Errorf("listing protected branches: %w", err)
+		}
+		slog.Info("fetched protected branches", "count", len(protectedBranches))
+	}
+
 	var projectHooks ProjectHooks
 	var groupHooks GroupHooks
 	if !skipSet.Has("hooks") {
@@ -129,5 +139,6 @@ func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, er
 		GroupHooks:        groupHooks,
 		ProjectVariables:  projectVariables,
 		GroupVariables:    groupVariables,
+		ProtectedBranches: protectedBranches,
 	}, nil
 }
