@@ -155,6 +155,24 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 		}
 	}
 
+	if !skipSet.Has("branch_protection") {
+		for _, p := range resources.Projects {
+			if p == nil {
+				continue
+			}
+			for _, b := range resources.ProtectedBranches[p.ID] {
+				name := branchProtectionResourceName(p, b)
+				key := "gitlab_branch_protection." + name
+				if !existingResources[key] {
+					cmds = append(cmds, ImportCommand{
+						Address: key,
+						ID:      fmt.Sprintf("%d:%s", p.ID, b.Name),
+					})
+				}
+			}
+		}
+	}
+
 	if !skipSet.Has("hooks") {
 		for _, g := range resources.Groups {
 			if g == nil {

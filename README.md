@@ -85,6 +85,7 @@ terraform/
 ├── ci_variables.tf         # generated: group and project CI/CD variables
 ├── pipeline_schedules.tf   # generated: variable with project → pipeline schedules
 ├── hooks.tf                # generated: project and group webhooks
+├── branch_protections.tf   # generated: project branch protection rules
 └── ...
 ```
 
@@ -109,6 +110,7 @@ terraform/
 - ✅ GitLab Project Variables ([`gitlab_project_variable`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_variable)) *
 - ✅ GitLab Project Hooks ([`gitlab_project_hook`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_hook))
 - ✅ GitLab Group Hooks ([`gitlab_group_hook`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/group_hook)) *(requires Premium/Ultimate)*
+- ✅ GitLab Branch Protection ([`gitlab_branch_protection`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/branch_protection)) **
 - 🚧 More resources coming soon
 
 > **\* CI/CD Variable Filtering:** Masked variables and file-type variables are automatically skipped.
@@ -117,6 +119,9 @@ terraform/
 >
 > **Important:** If you store secrets (SSH keys, API tokens, etc.) as `env_var`-type CI/CD variables, they will be written to `.tf` files in plaintext.
 > To prevent this, store sensitive values as **file-type** variables — this is also [GitLab's recommended approach](https://docs.gitlab.com/ci/variables/#use-file-type-cicd-variables) for multi-line secrets like SSH keys, since they cannot be masked.
+>
+> **\*\* Branch Protection:** The `allowed_to_push`, `allowed_to_merge`, `allowed_to_unprotect`, `unprotect_access_level`, and `code_owner_approval_required` attributes require a GitLab Premium/Ultimate instance.
+> These attributes are included by default but can be excluded with `--skip premium`. When skipped, only the free-tier attributes (`push_access_level`, `merge_access_level`, `allow_force_push`) are generated.
 
 ## Contributing
 
