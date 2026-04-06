@@ -21,6 +21,6 @@ resource "gitlab_branch_protection" "my_group_my_project_develop" {
   branch                 = "develop"
   push_access_level      = "developer"
   merge_access_level     = "developer"
-  unprotect_access_level = "maintainer"
   allow_force_push       = true
+  unprotect_access_level = "maintainer"
 }

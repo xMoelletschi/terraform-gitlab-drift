@@ -231,6 +231,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 		slog.Info("overwrote terraform files", "dir", terraformDir)
 	}
 
+	if err := os.RemoveAll(outputDir); err != nil {
+		slog.Debug("failed to clean up tmp directory", "err", err)
+	}
+
 	if driftFound {
 		slog.Warn("drift detected")
 		os.Exit(1)

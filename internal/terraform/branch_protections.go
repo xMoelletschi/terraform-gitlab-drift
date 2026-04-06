@@ -80,18 +80,18 @@ func WriteBranchProtections(p *gl.Project, branches []*gl.ProtectedBranch, premi
 		body.SetAttributeValue("push_access_level", cty.StringVal(branchProtectionAccessLevel(pushLevel)))
 		body.SetAttributeValue("merge_access_level", cty.StringVal(branchProtectionAccessLevel(mergeLevel)))
 
-		unprotectLevel := baseAccessLevel(b.UnprotectAccessLevels)
-		body.SetAttributeValue("unprotect_access_level", cty.StringVal(branchProtectionAccessLevel(unprotectLevel)))
-
 		if b.AllowForcePush {
 			body.SetAttributeValue("allow_force_push", cty.True)
 		}
 
-		if premium && b.CodeOwnerApprovalRequired {
-			body.SetAttributeValue("code_owner_approval_required", cty.True)
-		}
-
 		if premium {
+			unprotectLevel := baseAccessLevel(b.UnprotectAccessLevels)
+			body.SetAttributeValue("unprotect_access_level", cty.StringVal(branchProtectionAccessLevel(unprotectLevel)))
+
+			if b.CodeOwnerApprovalRequired {
+				body.SetAttributeValue("code_owner_approval_required", cty.True)
+			}
+
 			writeAccessBlocks(body, "allowed_to_push", b.PushAccessLevels)
 			writeAccessBlocks(body, "allowed_to_merge", b.MergeAccessLevels)
 			writeAccessBlocks(body, "allowed_to_unprotect", b.UnprotectAccessLevels)
