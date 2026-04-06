@@ -1,6 +1,7 @@
 package terraform
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -298,10 +299,12 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 }
 
 func writeFile(path string, writeFn func(io.Writer) error) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("creating file: %w", err)
+	var buf bytes.Buffer
+	if err := writeFn(&buf); err != nil {
+		return err
 	}
-	defer f.Close() //nolint:errcheck
-	return writeFn(f)
+	if buf.Len() == 0 {
+		return nil
+	}
+	return os.WriteFile(path, buf.Bytes(), 0o644)
 }
