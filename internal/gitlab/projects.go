@@ -3,6 +3,7 @@ package gitlab
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	gl "gitlab.com/gitlab-org/api/client-go"
 )
@@ -29,7 +30,7 @@ func (c *Client) ListProjects(ctx context.Context) ([]*gl.Project, error) {
 			}
 			opts.Page = resp.NextPage
 		}
-		return allProjects, nil
+		return filterDeletedProjects(allProjects), nil
 	}
 
 	opts := &gl.ListProjectsOptions{
@@ -49,5 +50,17 @@ func (c *Client) ListProjects(ctx context.Context) ([]*gl.Project, error) {
 		}
 		opts.Page = resp.NextPage
 	}
-	return allProjects, nil
+	return filterDeletedProjects(allProjects), nil
+}
+
+func filterDeletedProjects(projects []*gl.Project) []*gl.Project {
+	filtered := make([]*gl.Project, 0, len(projects))
+	for _, p := range projects {
+		if p.MarkedForDeletionOn != nil {
+			slog.Debug("skipping project pending deletion", "project", p.PathWithNamespace)
+			continue
+		}
+		filtered = append(filtered, p)
+	}
+	return filtered
 }

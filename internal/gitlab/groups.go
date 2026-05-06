@@ -38,7 +38,7 @@ func (c *Client) ListGroups(ctx context.Context) ([]*gl.Group, error) {
 			}
 			opts.Page = resp.NextPage
 		}
-		return allGroups, nil
+		return filterDeletedGroups(allGroups), nil
 	}
 
 	opts := &gl.ListGroupsOptions{
@@ -58,5 +58,17 @@ func (c *Client) ListGroups(ctx context.Context) ([]*gl.Group, error) {
 		}
 		opts.Page = resp.NextPage
 	}
-	return allGroups, nil
+	return filterDeletedGroups(allGroups), nil
+}
+
+func filterDeletedGroups(groups []*gl.Group) []*gl.Group {
+	filtered := make([]*gl.Group, 0, len(groups))
+	for _, g := range groups {
+		if g.MarkedForDeletionOn != nil {
+			slog.Debug("skipping group pending deletion", "group", g.FullPath)
+			continue
+		}
+		filtered = append(filtered, g)
+	}
+	return filtered
 }

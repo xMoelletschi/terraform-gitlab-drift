@@ -36,15 +36,15 @@ func (c *Client) ListProjectVariables(ctx context.Context, projects []*gl.Projec
 			}
 			for _, v := range page {
 				if v.Masked {
-					slog.Warn("skipping masked variable", "key", v.Key, "project", p.PathWithNamespace)
+					slog.Debug("skipping masked variable", "key", v.Key, "project", p.PathWithNamespace)
 					continue
 				}
 				if v.Hidden {
-					slog.Warn("skipping hidden variable", "key", v.Key, "project", p.PathWithNamespace)
+					slog.Debug("skipping hidden variable", "key", v.Key, "project", p.PathWithNamespace)
 					continue
 				}
 				if v.VariableType == gl.FileVariableType {
-					slog.Warn("skipping file variable", "key", v.Key, "project", p.PathWithNamespace)
+					slog.Debug("skipping file variable", "key", v.Key, "project", p.PathWithNamespace)
 					continue
 				}
 				vars = append(vars, v)
@@ -84,15 +84,15 @@ func (c *Client) ListGroupVariables(ctx context.Context, groups []*gl.Group) (Gr
 			}
 			for _, v := range page {
 				if v.Masked {
-					slog.Warn("skipping masked variable", "key", v.Key, "group", g.FullPath)
+					slog.Debug("skipping masked variable", "key", v.Key, "group", g.FullPath)
 					continue
 				}
 				if v.Hidden {
-					slog.Warn("skipping hidden variable", "key", v.Key, "group", g.FullPath)
+					slog.Debug("skipping hidden variable", "key", v.Key, "group", g.FullPath)
 					continue
 				}
 				if v.VariableType == gl.FileVariableType {
-					slog.Warn("skipping file variable", "key", v.Key, "group", g.FullPath)
+					slog.Debug("skipping file variable", "key", v.Key, "group", g.FullPath)
 					continue
 				}
 				vars = append(vars, v)

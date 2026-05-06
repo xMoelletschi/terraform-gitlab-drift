@@ -17,9 +17,10 @@ resource "gitlab_branch_protection" "my_group_my_project_main" {
 }
 
 resource "gitlab_branch_protection" "my_group_my_project_develop" {
-  project            = gitlab_project.my_group_my_project.id
-  branch             = "develop"
-  push_access_level  = "developer"
-  merge_access_level = "developer"
-  allow_force_push   = true
+  project                = gitlab_project.my_group_my_project.id
+  branch                 = "develop"
+  push_access_level      = "developer"
+  merge_access_level     = "developer"
+  allow_force_push       = true
+  unprotect_access_level = "maintainer"
 }
