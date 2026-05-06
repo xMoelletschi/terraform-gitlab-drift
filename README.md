@@ -61,6 +61,7 @@ When drift is detected, this creates (or updates) a merge request in the current
 | `--overwrite`     | -                    | `false`              | Overwrite files in terraform directory            |
 | `--show-diff`     | -                    | `true`               | Show diff between generated and existing files    |
 | `--skip`          | -                    | -                    | Resource types to skip (comma-separated). Use `premium` to skip all Premium-tier resources |
+| `--include`       | -                    | -                    | Resource types to opt back in (comma-separated). Use to enable resources skipped by default (currently `branch_protection`) |
 | `--create-mr`     | -                    | `false`              | Create a merge request with generated Terraform code |
 | `--target-repo`   | -                    | *(auto-detected)*    | GitLab project path or ID for the MR              |
 | `--mr-branch`     | -                    | `drift/backtrack`    | Branch name for the drift MR                      |
@@ -110,7 +111,7 @@ terraform/
 - ✅ GitLab Project Variables ([`gitlab_project_variable`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_variable)) *
 - ✅ GitLab Project Hooks ([`gitlab_project_hook`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_hook))
 - ✅ GitLab Group Hooks ([`gitlab_group_hook`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/group_hook)) *(requires Premium/Ultimate)*
-- ✅ GitLab Branch Protection ([`gitlab_branch_protection`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/branch_protection)) **
+- 🚧 GitLab Branch Protection ([`gitlab_branch_protection`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/branch_protection)) — *skipped by default, opt in with `--include branch_protection`* **
 - 🚧 More resources coming soon
 
 > **\* CI/CD Variable Filtering:** Masked variables and file-type variables are automatically skipped.
@@ -120,8 +121,14 @@ terraform/
 > **Important:** If you store secrets (SSH keys, API tokens, etc.) as `env_var`-type CI/CD variables, they will be written to `.tf` files in plaintext.
 > To prevent this, store sensitive values as **file-type** variables — this is also [GitLab's recommended approach](https://docs.gitlab.com/ci/variables/#use-file-type-cicd-variables) for multi-line secrets like SSH keys, since they cannot be masked.
 >
-> **\*\* Branch Protection:** The `allowed_to_push`, `allowed_to_merge`, `allowed_to_unprotect`, `unprotect_access_level`, and `code_owner_approval_required` attributes require a GitLab Premium/Ultimate instance.
-> These attributes are included by default but can be excluded with `--skip premium`. When skipped, only the free-tier attributes (`push_access_level`, `merge_access_level`, `allow_force_push`) are generated.
+> **\*\* Branch Protection (skipped by default):** The `gitlab_branch_protection` resource is currently skipped by default because of an upstream provider bug —
+> the provider's `Read` function does not populate `unprotect_access_level` into Terraform state on Free tier, which causes every `terraform plan` to mark every
+> protected branch for forced replacement. Enable it explicitly with `--include branch_protection` once your instance is Premium/Ultimate or once the upstream
+> provider bug is fixed.
+>
+> When enabled, the `allowed_to_push`, `allowed_to_merge`, `allowed_to_unprotect`, `unprotect_access_level`, and `code_owner_approval_required` attributes
+> require a GitLab Premium/Ultimate instance. They are emitted by default but can be excluded with `--skip premium`. When skipped, only the free-tier
+> attributes (`push_access_level`, `merge_access_level`, `allow_force_push`) are generated.
 
 ## Contributing
 

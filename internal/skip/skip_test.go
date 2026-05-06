@@ -98,3 +98,42 @@ func TestParseMixed(t *testing.T) {
 		t.Error("expected hooks from premium group")
 	}
 }
+
+func TestResolveAddsDefaults(t *testing.T) {
+	set, warnings := Resolve(nil, nil)
+	if len(warnings) != 0 {
+		t.Errorf("expected no warnings, got %v", warnings)
+	}
+	for _, name := range DefaultSkipped {
+		if !set.Has(name) {
+			t.Errorf("expected default-skipped %q in set", name)
+		}
+	}
+}
+
+func TestResolveIncludeOptsIn(t *testing.T) {
+	set, warnings := Resolve(nil, []string{"branch_protection"})
+	if len(warnings) != 0 {
+		t.Errorf("expected no warnings, got %v", warnings)
+	}
+	if set.Has("branch_protection") {
+		t.Error("branch_protection should not be skipped after --include")
+	}
+}
+
+func TestResolveExplicitSkipKeepsResource(t *testing.T) {
+	set, _ := Resolve([]string{"hooks"}, []string{"branch_protection"})
+	if !set.Has("hooks") {
+		t.Error("expected hooks in set from --skip")
+	}
+	if set.Has("branch_protection") {
+		t.Error("branch_protection should not be skipped after --include")
+	}
+}
+
+func TestResolveUnknownIncludeWarns(t *testing.T) {
+	_, warnings := Resolve(nil, []string{"foobar"})
+	if !slices.Contains(warnings, "foobar") {
+		t.Errorf("expected foobar in warnings, got %v", warnings)
+	}
+}

@@ -18,13 +18,14 @@ import (
 )
 
 var (
-	createMR      bool
-	overwrite     bool
-	showDiff      bool
-	skipResources []string
-	targetRepo    string
-	mrDestPath    string
-	mrBranch      string
+	createMR         bool
+	overwrite        bool
+	showDiff         bool
+	skipResources    []string
+	includeResources []string
+	targetRepo       string
+	mrDestPath       string
+	mrBranch         string
 )
 
 var scanCmd = &cobra.Command{
@@ -39,6 +40,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite files in terraform directory (default: write to tmp/ subdirectory)")
 	scanCmd.Flags().BoolVar(&showDiff, "show-diff", true, "Show diff between generated and existing files")
 	scanCmd.Flags().StringSliceVar(&skipResources, "skip", nil, "Resource types to skip (comma-separated). Use 'premium' to skip all Premium-tier resources")
+	scanCmd.Flags().StringSliceVar(&includeResources, "include", nil, "Resource types to opt back in (comma-separated). Use to enable resources that are skipped by default (currently: branch_protection)")
 	scanCmd.Flags().StringVar(&targetRepo, "target-repo", "", "GitLab project path or ID for the MR (default: detected from git remote in --terraform-dir)")
 	scanCmd.Flags().StringVar(&mrDestPath, "mr-dest-path", "", "Path within target repo where .tf files go (default: root)")
 	scanCmd.Flags().StringVar(&mrBranch, "mr-branch", "drift/backtrack", "Branch name for the drift MR")
@@ -67,9 +69,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 		slog.Info("detected target repo from git remote", "target_repo", targetRepo)
 	}
 
-	skipSet, skipWarnings := skip.Parse(skipResources)
+	skipSet, skipWarnings := skip.Resolve(skipResources, includeResources)
 	for _, w := range skipWarnings {
-		slog.Warn("unknown skip value, ignoring", "name", w)
+		slog.Warn("unknown skip/include value, ignoring", "name", w)
 	}
 	if len(skipSet) > 0 {
 		skipped := make([]string, 0, len(skipSet))
