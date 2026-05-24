@@ -19,6 +19,7 @@ var ResourceTypes = []string{
 	"schedules",
 	"branch_protection",
 	"service_accounts",
+	"job_token_scopes",
 }
 
 // Groups map a single name to multiple resource types.

@@ -207,6 +207,25 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 		}
 	}
 
+	if !skipSet.Has("job_token_scopes") {
+		for _, p := range resources.Projects {
+			if p == nil {
+				continue
+			}
+			if resources.JobTokenScopes[p.ID] == nil {
+				continue
+			}
+			name := projectResourceName(p)
+			key := "gitlab_project_job_token_scopes." + name
+			if !existingResources[key] {
+				cmds = append(cmds, ImportCommand{
+					Address: key,
+					ID:      fmt.Sprintf("%d", p.ID),
+				})
+			}
+		}
+	}
+
 	if !skipSet.Has("schedules") {
 		for _, p := range resources.Projects {
 			if p == nil {

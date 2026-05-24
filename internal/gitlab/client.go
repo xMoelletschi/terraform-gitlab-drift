@@ -26,6 +26,7 @@ type Resources struct {
 	ProjectVariables  ProjectVariables
 	GroupVariables    GroupVariables
 	ProtectedBranches ProtectedBranches
+	JobTokenScopes    JobTokenScopes
 }
 
 func NewClientFromAPI(api *gl.Client, group string) *Client {
@@ -112,6 +113,15 @@ func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, er
 		slog.Info("fetched protected branches", "count", len(protectedBranches))
 	}
 
+	var jobTokenScopes JobTokenScopes
+	if !skipSet.Has("job_token_scopes") {
+		jobTokenScopes, err = c.ListJobTokenScopes(ctx, projects)
+		if err != nil {
+			return nil, fmt.Errorf("listing job token scopes: %w", err)
+		}
+		slog.Info("fetched job token scopes", "count", len(jobTokenScopes))
+	}
+
 	var projectHooks ProjectHooks
 	var groupHooks GroupHooks
 	if !skipSet.Has("hooks") {
@@ -140,5 +150,6 @@ func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, er
 		ProjectVariables:  projectVariables,
 		GroupVariables:    groupVariables,
 		ProtectedBranches: protectedBranches,
+		JobTokenScopes:    jobTokenScopes,
 	}, nil
 }

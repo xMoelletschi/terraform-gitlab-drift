@@ -23,6 +23,22 @@ func buildGroupRefMap(groups []*gl.Group) groupRefMap {
 	return refs
 }
 
+type projectRefMap map[int64]string
+
+func buildProjectRefMap(projects []*gl.Project) projectRefMap {
+	if len(projects) == 0 {
+		return nil
+	}
+	refs := make(projectRefMap, len(projects))
+	for _, p := range projects {
+		if p == nil || p.ID == 0 {
+			continue
+		}
+		refs[p.ID] = projectResourceName(p)
+	}
+	return refs
+}
+
 func setGroupIDAttribute(body *hclwrite.Body, attr string, id int64, refs groupRefMap) {
 	if id == 0 {
 		return
