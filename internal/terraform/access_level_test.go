@@ -3,7 +3,7 @@ package terraform
 import (
 	"testing"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 func TestAccessLevelToString(t *testing.T) {

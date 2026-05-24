@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 // isNotFound returns true if the error represents a 404 Not Found response.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 // ProtectedBranches maps project IDs to their protected branches.

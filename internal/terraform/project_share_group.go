@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/hcl/v2/hclwrite"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 func WriteProjectMembershipVariable(projects []*gl.Project, w io.Writer) error {

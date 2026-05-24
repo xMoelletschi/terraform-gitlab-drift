@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 func WriteJobTokenScopes(p *gl.Project, scope *gitlab.JobTokenScope, projectRefs projectRefMap, groupRefs groupRefMap, w io.Writer) error {

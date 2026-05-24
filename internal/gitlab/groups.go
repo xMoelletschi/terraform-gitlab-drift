@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 func (c *Client) ListGroups(ctx context.Context) ([]*gl.Group, error) {

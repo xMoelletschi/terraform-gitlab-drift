@@ -1,6 +1,6 @@
 package terraform
 
-import gl "gitlab.com/gitlab-org/api/client-go"
+import gl "gitlab.com/gitlab-org/api/client-go/v2"
 
 func accessLevelToString(level gl.AccessLevelValue) string {
 	switch level {

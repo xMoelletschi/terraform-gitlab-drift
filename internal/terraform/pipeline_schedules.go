@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 func normalizeName(s string) string {
