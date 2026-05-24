@@ -189,8 +189,8 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 		if !p.GroupRunnersEnabled {
 			body.SetAttributeValue("group_runners_enabled", cty.BoolVal(p.GroupRunnersEnabled))
 		}
-		if !p.PackagesEnabled {
-			body.SetAttributeValue("packages_enabled", cty.BoolVal(p.PackagesEnabled))
+		if p.PackageRegistryAccessLevel != gl.EnabledAccessControl {
+			body.SetAttributeValue("package_registry_access_level", cty.StringVal(string(p.PackageRegistryAccessLevel)))
 		}
 		if !p.LFSEnabled {
 			body.SetAttributeValue("lfs_enabled", cty.BoolVal(p.LFSEnabled))
