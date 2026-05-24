@@ -22,6 +22,7 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 	var errs []error
 
 	groupRefs := buildGroupRefMap(resources.Groups)
+	projectRefs := buildProjectRefMap(resources.Projects)
 
 	groupsByPath := make(map[string]*gl.Group)
 	for _, g := range resources.Groups {
@@ -284,6 +285,13 @@ func WriteAll(resources *gitlab.Resources, dir string, mainGroup string, skipSet
 					if !skipSet.Has("labels") && len(resources.ProjectLabels[p.ID]) > 0 {
 						if err := WriteProjectLabelResource(p, w); err != nil {
 							return err
+						}
+					}
+					if !skipSet.Has("job_token_scopes") {
+						if scope := resources.JobTokenScopes[p.ID]; scope != nil {
+							if err := WriteJobTokenScopes(p, scope, projectRefs, groupRefs, w); err != nil {
+								return err
+							}
 						}
 					}
 				}

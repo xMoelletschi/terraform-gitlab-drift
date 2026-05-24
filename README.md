@@ -112,6 +112,7 @@ terraform/
 - ✅ GitLab Project Hooks ([`gitlab_project_hook`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_hook))
 - ✅ GitLab Group Hooks ([`gitlab_group_hook`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/group_hook)) *(requires Premium/Ultimate)*
 - 🚧 GitLab Branch Protection ([`gitlab_branch_protection`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/branch_protection)) — *skipped by default, opt in with `--include branch_protection`* **
+- ✅ GitLab Project Job Token Scopes ([`gitlab_project_job_token_scopes`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_job_token_scopes))
 - 🚧 More resources coming soon
 
 > **\* CI/CD Variable Filtering:** Masked variables and file-type variables are automatically skipped.
