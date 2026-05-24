@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 func TestWriteGroupsDefaultsOmitted(t *testing.T) {

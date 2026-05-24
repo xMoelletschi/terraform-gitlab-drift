@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 func TestWriteProjectMembershipVariable(t *testing.T) {

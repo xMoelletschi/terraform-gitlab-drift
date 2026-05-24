@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
-	gitlabtesting "gitlab.com/gitlab-org/api/client-go/testing"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
+	gitlabtesting "gitlab.com/gitlab-org/api/client-go/v2/testing"
 	"go.uber.org/mock/gomock"
 )
 

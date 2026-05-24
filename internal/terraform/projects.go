@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 // WriteProjects writes GitLab projects as Terraform HCL resources.
@@ -189,8 +189,8 @@ func WriteProjects(projects []*gl.Project, w io.Writer, groupRefs groupRefMap) e
 		if !p.GroupRunnersEnabled {
 			body.SetAttributeValue("group_runners_enabled", cty.BoolVal(p.GroupRunnersEnabled))
 		}
-		if !p.PackagesEnabled {
-			body.SetAttributeValue("packages_enabled", cty.BoolVal(p.PackagesEnabled))
+		if p.PackageRegistryAccessLevel != gl.EnabledAccessControl {
+			body.SetAttributeValue("package_registry_access_level", cty.StringVal(string(p.PackageRegistryAccessLevel)))
 		}
 		if !p.LFSEnabled {
 			body.SetAttributeValue("lfs_enabled", cty.BoolVal(p.LFSEnabled))

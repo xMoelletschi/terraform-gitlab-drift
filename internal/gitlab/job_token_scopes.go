@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 type JobTokenScope struct {
@@ -62,19 +62,33 @@ func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project)
 			groupOpts.Page = resp.NextPage
 		}
 
-		// GitLab always includes the project itself in the inbound allowlist
-		// implicitly; filter it out so we don't emit redundant self-references.
-		filteredProjects := make([]*gl.Project, 0, len(allowedProjects))
+		// GitLab can return duplicate entries in the allowlist; the provider's
+		// state stores a deduped Set, so we dedup here too to match.
+		seen := make(map[int64]bool, len(allowedProjects))
+		deduped := make([]*gl.Project, 0, len(allowedProjects))
 		for _, ap := range allowedProjects {
-			if ap.ID == p.ID {
+			if seen[ap.ID] {
 				continue
 			}
-			filteredProjects = append(filteredProjects, ap)
+			seen[ap.ID] = true
+			deduped = append(deduped, ap)
+		}
+
+		// The provider's Read function stores target_project_ids = [] when the
+		// API allowlist contains only the source project itself; we mirror
+		// that so HCL matches state. When the allowlist has additional
+		// entries we must keep self in the list — the GitLab API rejects
+		// DELETE requests for the source project ("Source project cannot be
+		// removed from the job token scope"), so emitting self-less HCL
+		// causes apply to fail when the provider tries to reconcile.
+		allowed := deduped
+		if len(deduped) == 1 && deduped[0].ID == p.ID {
+			allowed = nil
 		}
 
 		result[p.ID] = &JobTokenScope{
 			InboundEnabled:  settings.InboundEnabled,
-			AllowedProjects: filteredProjects,
+			AllowedProjects: allowed,
 			AllowedGroups:   allowedGroups,
 		}
 	}

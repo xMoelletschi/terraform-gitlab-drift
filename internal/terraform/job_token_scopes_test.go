@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 func TestWriteJobTokenScopes_ManagedRefs(t *testing.T) {
@@ -102,6 +102,36 @@ func TestWriteJobTokenScopes_EnabledOnly(t *testing.T) {
 	}
 
 	compareGolden(t, "job_token_scopes_enabled_only.tf", buf.String())
+}
+
+func TestWriteJobTokenScopes_WithSelf(t *testing.T) {
+	project := &gl.Project{
+		ID:                1,
+		Path:              "my-project",
+		Namespace:         &gl.ProjectNamespace{FullPath: "my-group"},
+		PathWithNamespace: "my-group/my-project",
+	}
+
+	other := &gl.Project{
+		ID:                10,
+		Path:              "foo",
+		Namespace:         &gl.ProjectNamespace{FullPath: "my-group"},
+		PathWithNamespace: "my-group/foo",
+	}
+	scope := &gitlab.JobTokenScope{
+		InboundEnabled:  true,
+		AllowedProjects: []*gl.Project{project, other},
+	}
+
+	projectRefs := buildProjectRefMap([]*gl.Project{project, other})
+	groupRefs := buildGroupRefMap(nil)
+
+	var buf bytes.Buffer
+	if err := WriteJobTokenScopes(project, scope, projectRefs, groupRefs, &buf); err != nil {
+		t.Fatalf("WriteJobTokenScopes error: %v", err)
+	}
+
+	compareGolden(t, "job_token_scopes_with_self.tf", buf.String())
 }
 
 func TestWriteJobTokenScopes_Disabled(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 // GroupMembers maps group IDs to their direct members.

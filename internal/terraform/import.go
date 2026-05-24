@@ -7,7 +7,7 @@ import (
 
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/skip"
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 // ImportCommand represents a single terraform import command.

@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 // ProjectHooks maps project IDs to their hooks.

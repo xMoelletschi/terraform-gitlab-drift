@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	gl "gitlab.com/gitlab-org/api/client-go"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 // ProjectVariables maps project IDs to their CI/CD variables.

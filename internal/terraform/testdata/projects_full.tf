@@ -47,7 +47,7 @@ resource "gitlab_project" "full_group_full_project" {
   build_timeout                                    = 600
   shared_runners_enabled                           = false
   group_runners_enabled                            = false
-  packages_enabled                                 = false
+  package_registry_access_level                    = "disabled"
   lfs_enabled                                      = false
   request_access_enabled                           = false
   autoclose_referenced_issues                      = false
