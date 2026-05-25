@@ -62,11 +62,29 @@ func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project)
 			groupOpts.Page = resp.NextPage
 		}
 
-		// GitLab can return duplicate entries in the allowlist; the provider's
-		// state stores a deduped Set, so we dedup here too to match.
+		// Mirror the provider's Read behavior so HCL matches state.
+		//
+		// The provider's getProjectCIJobScopes removes self with a `break`,
+		// stripping a single self entry from the raw API response before
+		// storing the rest in a Set (which dedups by ID). When the GitLab
+		// API returns self more than once (a known data quirk reachable e.g.
+		// by manual UI/API additions), one self instance survives the
+		// `break` and ends up in state — and the API rejects DELETE on self
+		// with 400 "Source project cannot be removed from the job token
+		// scope", so emitting self-less HCL makes apply fail.
+		//
+		// We replicate this: count self occurrences in the raw response, then
+		// dedup. If self appeared <= 1 times we strip it (matches state =
+		// without self). If >= 2 times we keep it (matches state = with
+		// self). We never POST self ourselves, so this never propagates the
+		// duplicate to projects that don't already have it.
+		selfCount := 0
 		seen := make(map[int64]bool, len(allowedProjects))
 		deduped := make([]*gl.Project, 0, len(allowedProjects))
 		for _, ap := range allowedProjects {
+			if ap.ID == p.ID {
+				selfCount++
+			}
 			if seen[ap.ID] {
 				continue
 			}
@@ -74,15 +92,18 @@ func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project)
 			deduped = append(deduped, ap)
 		}
 
-		// The provider's Read function stores target_project_ids = [] when the
-		// API allowlist contains only the source project itself; we mirror
-		// that so HCL matches state. When the allowlist has additional
-		// entries we must keep self in the list — the GitLab API rejects
-		// DELETE requests for the source project ("Source project cannot be
-		// removed from the job token scope"), so emitting self-less HCL
-		// causes apply to fail when the provider tries to reconcile.
 		allowed := deduped
-		if len(deduped) == 1 && deduped[0].ID == p.ID {
+		if selfCount <= 1 {
+			filtered := make([]*gl.Project, 0, len(deduped))
+			for _, ap := range deduped {
+				if ap.ID == p.ID {
+					continue
+				}
+				filtered = append(filtered, ap)
+			}
+			allowed = filtered
+		}
+		if len(allowed) == 0 {
 			allowed = nil
 		}
 
