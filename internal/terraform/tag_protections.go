@@ -52,7 +52,7 @@ func WriteTagProtections(p *gl.Project, tags []*gl.ProtectedTag, premium bool, w
 		body.SetAttributeValue("tag", cty.StringVal(t.Name))
 
 		createLevel := baseTagAccessLevel(t.CreateAccessLevels)
-		body.SetAttributeValue("create_access_level", cty.StringVal(branchProtectionAccessLevel(createLevel)))
+		body.SetAttributeValue("create_access_level", cty.StringVal(protectionAccessLevel(createLevel)))
 
 		if premium {
 			writeTagAccessBlocks(body, "allowed_to_create", t.CreateAccessLevels)
