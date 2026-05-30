@@ -18,6 +18,7 @@ var ResourceTypes = []string{
 	"mr_approvals",
 	"schedules",
 	"branch_protection",
+	"tag_protection",
 	"service_accounts",
 	"job_token_scopes",
 }
