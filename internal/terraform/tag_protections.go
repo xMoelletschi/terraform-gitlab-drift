@@ -9,12 +9,8 @@ import (
 	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
-func normalizeTagName(s string) string {
-	return normalizeBranchName(s)
-}
-
 func tagProtectionResourceName(p *gl.Project, t *gl.ProtectedTag) string {
-	return projectResourceName(p) + "_" + normalizeTagName(t.Name)
+	return projectResourceName(p) + "_" + normalizeBranchName(t.Name)
 }
 
 func isBaseTagAccessLevel(l *gl.TagAccessDescription) bool {
