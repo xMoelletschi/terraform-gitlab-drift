@@ -1,0 +1,105 @@
+package terraform
+
+import (
+	"fmt"
+	"io"
+
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/zclconf/go-cty/cty"
+	gl "gitlab.com/gitlab-org/api/client-go/v2"
+)
+
+func tagProtectionResourceName(p *gl.Project, t *gl.ProtectedTag) string {
+	return projectResourceName(p) + "_" + normalizeBranchName(t.Name)
+}
+
+// tagProtectionResourceNames returns deterministic, collision-free terraform
+// resource names for one project's protected tags. Distinct tag names can
+// normalize to the same label (e.g. "v1.0" and "v1-0" both become "v1_0"); the
+// second and later collisions get a numeric suffix so every block stays unique.
+// The writer and the import generator must call this with the same tag slice so
+// the names they emit agree.
+func tagProtectionResourceNames(p *gl.Project, tags []*gl.ProtectedTag) []string {
+	names := make([]string, len(tags))
+	used := make(map[string]bool, len(tags))
+	for i, t := range tags {
+		base := tagProtectionResourceName(p, t)
+		name := base
+		for n := 1; used[name]; n++ {
+			name = fmt.Sprintf("%s_%d", base, n)
+		}
+		used[name] = true
+		names[i] = name
+	}
+	return names
+}
+
+func isBaseTagAccessLevel(l *gl.TagAccessDescription) bool {
+	return l.UserID == 0 && l.GroupID == 0 && l.DeployKeyID == 0
+}
+
+// baseTagAccessLevel returns the access level from the entry that represents
+// the overall create access level (no specific user/group/deploy key).
+func baseTagAccessLevel(levels []*gl.TagAccessDescription) gl.AccessLevelValue {
+	for _, l := range levels {
+		if isBaseTagAccessLevel(l) {
+			return l.AccessLevel
+		}
+	}
+	if len(levels) > 0 {
+		return levels[0].AccessLevel
+	}
+	return gl.MaintainerPermissions
+}
+
+func WriteTagProtections(p *gl.Project, tags []*gl.ProtectedTag, premium bool, w io.Writer) error {
+	f := hclwrite.NewEmptyFile()
+	rootBody := f.Body()
+	projName := projectResourceName(p)
+	names := tagProtectionResourceNames(p, tags)
+
+	for i, t := range tags {
+		if i > 0 {
+			rootBody.AppendNewline()
+		}
+		block := rootBody.AppendNewBlock("resource", []string{"gitlab_tag_protection", names[i]})
+		body := block.Body()
+
+		body.SetAttributeTraversal("project", hcl.Traversal{
+			hcl.TraverseRoot{Name: "gitlab_project"},
+			hcl.TraverseAttr{Name: projName},
+			hcl.TraverseAttr{Name: "id"},
+		})
+		body.SetAttributeValue("tag", cty.StringVal(t.Name))
+
+		createLevel := baseTagAccessLevel(t.CreateAccessLevels)
+		body.SetAttributeValue("create_access_level", cty.StringVal(protectionAccessLevel(createLevel)))
+
+		if premium {
+			writeTagAccessBlocks(body, "allowed_to_create", t.CreateAccessLevels)
+		}
+	}
+
+	_, err := w.Write(f.Bytes())
+	return err
+}
+
+func writeTagAccessBlocks(body *hclwrite.Body, blockName string, levels []*gl.TagAccessDescription) {
+	for _, l := range levels {
+		if isBaseTagAccessLevel(l) {
+			continue
+		}
+		nested := body.AppendNewBlock(blockName, nil)
+		nb := nested.Body()
+		if l.UserID != 0 {
+			nb.SetAttributeValue("user_id", cty.NumberIntVal(l.UserID))
+		}
+		if l.GroupID != 0 {
+			nb.SetAttributeValue("group_id", cty.NumberIntVal(l.GroupID))
+		}
+		if l.DeployKeyID != 0 {
+			nb.SetAttributeValue("deploy_key_id", cty.NumberIntVal(l.DeployKeyID))
+		}
+	}
+}

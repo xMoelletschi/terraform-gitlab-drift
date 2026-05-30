@@ -21,7 +21,9 @@ func branchProtectionResourceName(p *gl.Project, b *gl.ProtectedBranch) string {
 
 const adminAccessLevel gl.AccessLevelValue = 60
 
-func branchProtectionAccessLevel(level gl.AccessLevelValue) string {
+// protectionAccessLevel maps an access level to the string used by branch and
+// tag protection resources (push/merge/unprotect and create access levels).
+func protectionAccessLevel(level gl.AccessLevelValue) string {
 	switch level {
 	case gl.NoPermissions:
 		return "no one"
@@ -77,8 +79,8 @@ func WriteBranchProtections(p *gl.Project, branches []*gl.ProtectedBranch, premi
 		pushLevel := baseAccessLevel(b.PushAccessLevels)
 		mergeLevel := baseAccessLevel(b.MergeAccessLevels)
 
-		body.SetAttributeValue("push_access_level", cty.StringVal(branchProtectionAccessLevel(pushLevel)))
-		body.SetAttributeValue("merge_access_level", cty.StringVal(branchProtectionAccessLevel(mergeLevel)))
+		body.SetAttributeValue("push_access_level", cty.StringVal(protectionAccessLevel(pushLevel)))
+		body.SetAttributeValue("merge_access_level", cty.StringVal(protectionAccessLevel(mergeLevel)))
 
 		if b.AllowForcePush {
 			body.SetAttributeValue("allow_force_push", cty.True)
@@ -86,7 +88,7 @@ func WriteBranchProtections(p *gl.Project, branches []*gl.ProtectedBranch, premi
 
 		if premium {
 			unprotectLevel := baseAccessLevel(b.UnprotectAccessLevels)
-			body.SetAttributeValue("unprotect_access_level", cty.StringVal(branchProtectionAccessLevel(unprotectLevel)))
+			body.SetAttributeValue("unprotect_access_level", cty.StringVal(protectionAccessLevel(unprotectLevel)))
 
 			if b.CodeOwnerApprovalRequired {
 				body.SetAttributeValue("code_owner_approval_required", cty.True)

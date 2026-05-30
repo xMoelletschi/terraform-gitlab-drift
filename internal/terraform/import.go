@@ -173,6 +173,25 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 		}
 	}
 
+	if !skipSet.Has("tag_protection") {
+		for _, p := range resources.Projects {
+			if p == nil {
+				continue
+			}
+			tags := resources.ProtectedTags[p.ID]
+			names := tagProtectionResourceNames(p, tags)
+			for i, t := range tags {
+				key := "gitlab_tag_protection." + names[i]
+				if !existingResources[key] {
+					cmds = append(cmds, ImportCommand{
+						Address: key,
+						ID:      fmt.Sprintf("%d:%s", p.ID, t.Name),
+					})
+				}
+			}
+		}
+	}
+
 	if !skipSet.Has("hooks") {
 		for _, g := range resources.Groups {
 			if g == nil {

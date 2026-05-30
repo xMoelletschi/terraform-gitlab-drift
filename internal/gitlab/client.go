@@ -26,6 +26,7 @@ type Resources struct {
 	ProjectVariables  ProjectVariables
 	GroupVariables    GroupVariables
 	ProtectedBranches ProtectedBranches
+	ProtectedTags     ProtectedTags
 	JobTokenScopes    JobTokenScopes
 }
 
@@ -113,6 +114,15 @@ func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, er
 		slog.Info("fetched protected branches", "count", len(protectedBranches))
 	}
 
+	var protectedTags ProtectedTags
+	if !skipSet.Has("tag_protection") {
+		protectedTags, err = c.ListProtectedTags(ctx, projects)
+		if err != nil {
+			return nil, fmt.Errorf("listing protected tags: %w", err)
+		}
+		slog.Info("fetched protected tags", "count", len(protectedTags))
+	}
+
 	var jobTokenScopes JobTokenScopes
 	if !skipSet.Has("job_token_scopes") {
 		jobTokenScopes, err = c.ListJobTokenScopes(ctx, projects)
@@ -150,6 +160,7 @@ func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, er
 		ProjectVariables:  projectVariables,
 		GroupVariables:    groupVariables,
 		ProtectedBranches: protectedBranches,
+		ProtectedTags:     protectedTags,
 		JobTokenScopes:    jobTokenScopes,
 	}, nil
 }

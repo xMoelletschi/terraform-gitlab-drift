@@ -87,6 +87,7 @@ terraform/
 ├── pipeline_schedules.tf   # generated: variable with project → pipeline schedules
 ├── hooks.tf                # generated: project and group webhooks
 ├── branch_protections.tf   # generated: project branch protection rules
+├── tag_protections.tf      # generated: project tag protection rules
 └── ...
 ```
 
@@ -112,6 +113,7 @@ terraform/
 - ✅ GitLab Project Hooks ([`gitlab_project_hook`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_hook))
 - ✅ GitLab Group Hooks ([`gitlab_group_hook`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/group_hook)) *(requires Premium/Ultimate)*
 - 🚧 GitLab Branch Protection ([`gitlab_branch_protection`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/branch_protection)) — *skipped by default, opt in with `--include branch_protection`* **
+- ✅ GitLab Tag Protection ([`gitlab_tag_protection`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/tag_protection)) ***
 - ✅ GitLab Project Job Token Scopes ([`gitlab_project_job_token_scopes`](https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project_job_token_scopes))
 - 🚧 More resources coming soon
 
@@ -130,6 +132,10 @@ terraform/
 > When enabled, the `allowed_to_push`, `allowed_to_merge`, `allowed_to_unprotect`, `unprotect_access_level`, and `code_owner_approval_required` attributes
 > require a GitLab Premium/Ultimate instance. They are emitted by default but can be excluded with `--skip premium`. When skipped, only the free-tier
 > attributes (`push_access_level`, `merge_access_level`, `allow_force_push`) are generated.
+>
+> **\*\*\* Tag Protection:** The free-tier `create_access_level` is emitted by default. The granular `allowed_to_create` blocks (specific users/groups/deploy
+> keys) require a GitLab Premium/Ultimate instance and can be excluded with `--skip premium`. Unlike branch protection, tag protection has no Free-tier read bug
+> (the resource has no `unprotect`/`ForceNew` attribute), so it runs by default and can be turned off with `--skip tag_protection`.
 
 ## Contributing
 
