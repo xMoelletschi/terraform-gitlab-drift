@@ -178,9 +178,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if p == nil {
 				continue
 			}
-			for _, t := range resources.ProtectedTags[p.ID] {
-				name := tagProtectionResourceName(p, t)
-				key := "gitlab_tag_protection." + name
+			tags := resources.ProtectedTags[p.ID]
+			names := tagProtectionResourceNames(p, tags)
+			for i, t := range tags {
+				key := "gitlab_tag_protection." + names[i]
 				if !existingResources[key] {
 					cmds = append(cmds, ImportCommand{
 						Address: key,

@@ -33,6 +33,33 @@ func TestTagProtectionResourceNameWildcard(t *testing.T) {
 	}
 }
 
+func TestTagProtectionResourceNamesCollision(t *testing.T) {
+	project := &gl.Project{
+		Path:      "my-project",
+		Namespace: &gl.ProjectNamespace{FullPath: "my-group"},
+	}
+	// All three tag names normalize to the same base label and must stay unique.
+	tags := []*gl.ProtectedTag{
+		{Name: "v1.0"},
+		{Name: "v1-0"},
+		{Name: "v1_0"},
+	}
+	got := tagProtectionResourceNames(project, tags)
+	want := []string{
+		"my_group_my_project_v1_0",
+		"my_group_my_project_v1_0_1",
+		"my_group_my_project_v1_0_2",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %d names, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("names[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
 func TestWriteTagProtections_Free(t *testing.T) {
 	project := &gl.Project{
 		ID:                1,
