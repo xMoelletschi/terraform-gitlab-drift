@@ -29,6 +29,9 @@ func (c *Client) ListProtectedTags(ctx context.Context, projects []*gl.Project) 
 		for {
 			page, resp, err := c.api.ProtectedTags.ListProtectedTags(p.ID, opts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "protected tags", p.PathWithNamespace) {
+					break
+				}
 				return nil, fmt.Errorf("listing protected tags for project %d: %w", p.ID, err)
 			}
 			tags = append(tags, page...)

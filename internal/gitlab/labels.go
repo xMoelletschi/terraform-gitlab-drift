@@ -34,6 +34,9 @@ func (c *Client) ListGroupLabels(ctx context.Context, groups []*gl.Group) (Group
 		for {
 			page, resp, err := c.api.GroupLabels.ListGroupLabels(g.ID, opts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "group labels", g.FullPath) {
+					break
+				}
 				return nil, fmt.Errorf("listing labels for group %d: %w", g.ID, err)
 			}
 			labels = append(labels, page...)
@@ -75,6 +78,9 @@ func (c *Client) ListProjectLabels(ctx context.Context, projects []*gl.Project) 
 		for {
 			page, resp, err := c.api.Labels.ListLabels(p.ID, opts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "project labels", p.PathWithNamespace) {
+					break
+				}
 				return nil, fmt.Errorf("listing labels for project %d: %w", p.ID, err)
 			}
 			for _, l := range page {

@@ -2,10 +2,8 @@ package gitlab
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 
 	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
@@ -34,6 +32,9 @@ func (c *Client) ListProjectHooks(ctx context.Context, projects []*gl.Project) (
 		for {
 			page, resp, err := c.api.Projects.ListProjectHooks(p.ID, opts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "project hooks", p.PathWithNamespace) {
+					break
+				}
 				return nil, fmt.Errorf("listing hooks for project %d: %w", p.ID, err)
 			}
 			hooks = append(hooks, page...)
@@ -67,9 +68,9 @@ func (c *Client) ListGroupHooks(ctx context.Context, groups []*gl.Group) (GroupH
 		for {
 			page, resp, err := c.api.Groups.ListGroupHooks(g.ID, opts, gl.WithContext(ctx))
 			if err != nil {
-				var errResp *gl.ErrorResponse
-				if errors.As(err, &errResp) && errResp.HasStatusCode(http.StatusForbidden) {
-					slog.Warn("group hooks require Premium/Ultimate, skipping", "group", g.FullPath)
+				// Group hooks require Premium/Ultimate; a 403 here is expected on
+				// Free and is skipped along with any other inaccessible group.
+				if skipInaccessible(err, "group hooks", g.FullPath) {
 					break
 				}
 				return nil, fmt.Errorf("listing hooks for group %d: %w", g.ID, err)

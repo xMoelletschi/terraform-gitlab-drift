@@ -27,6 +27,9 @@ func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project)
 
 		settings, _, err := c.api.JobTokenScope.GetProjectJobTokenAccessSettings(p.ID, gl.WithContext(ctx))
 		if err != nil {
+			if skipInaccessible(err, "job token scopes", p.PathWithNamespace) {
+				continue
+			}
 			return nil, fmt.Errorf("getting job token access settings for project %d: %w", p.ID, err)
 		}
 
@@ -37,6 +40,9 @@ func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project)
 		for {
 			page, resp, err := c.api.JobTokenScope.GetProjectJobTokenInboundAllowList(p.ID, projectOpts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "job token inbound allowlist", p.PathWithNamespace) {
+					break
+				}
 				return nil, fmt.Errorf("listing job token inbound allowlist projects for project %d: %w", p.ID, err)
 			}
 			allowedProjects = append(allowedProjects, page...)
@@ -53,6 +59,9 @@ func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project)
 		for {
 			page, resp, err := c.api.JobTokenScope.GetJobTokenAllowlistGroups(p.ID, groupOpts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "job token allowlist groups", p.PathWithNamespace) {
+					break
+				}
 				return nil, fmt.Errorf("listing job token allowlist groups for project %d: %w", p.ID, err)
 			}
 			allowedGroups = append(allowedGroups, page...)

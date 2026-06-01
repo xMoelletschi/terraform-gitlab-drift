@@ -29,6 +29,9 @@ func (c *Client) ListGroupMembers(ctx context.Context, groups []*gl.Group) (Grou
 		for {
 			page, resp, err := c.api.Groups.ListGroupMembers(g.ID, opts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "group members", g.FullPath) {
+					break
+				}
 				return nil, fmt.Errorf("listing members for group %d: %w", g.ID, err)
 			}
 			members = append(members, page...)

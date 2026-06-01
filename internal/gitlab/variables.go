@@ -32,6 +32,9 @@ func (c *Client) ListProjectVariables(ctx context.Context, projects []*gl.Projec
 		for {
 			page, resp, err := c.api.ProjectVariables.ListVariables(p.ID, opts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "project variables", p.PathWithNamespace) {
+					break
+				}
 				return nil, fmt.Errorf("listing variables for project %d: %w", p.ID, err)
 			}
 			for _, v := range page {
@@ -80,6 +83,9 @@ func (c *Client) ListGroupVariables(ctx context.Context, groups []*gl.Group) (Gr
 		for {
 			page, resp, err := c.api.GroupVariables.ListVariables(g.ID, opts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "group variables", g.FullPath) {
+					break
+				}
 				return nil, fmt.Errorf("listing variables for group %d: %w", g.ID, err)
 			}
 			for _, v := range page {

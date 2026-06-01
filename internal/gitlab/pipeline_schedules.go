@@ -28,6 +28,9 @@ func (c *Client) ListPipelineSchedules(ctx context.Context, projects []*gl.Proje
 		for {
 			page, resp, err := c.api.PipelineSchedules.ListPipelineSchedules(p.ID, opts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "pipeline schedules", p.PathWithNamespace) {
+					break
+				}
 				return nil, fmt.Errorf("listing pipeline schedules for project %d: %w", p.ID, err)
 			}
 			schedules = append(schedules, page...)
@@ -43,6 +46,9 @@ func (c *Client) ListPipelineSchedules(ctx context.Context, projects []*gl.Proje
 			slog.Debug("fetching pipeline schedule detail", "project", p.PathWithNamespace, "schedule", s.ID)
 			d, _, err := c.api.PipelineSchedules.GetPipelineSchedule(p.ID, s.ID, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "pipeline schedule detail", p.PathWithNamespace) {
+					continue
+				}
 				return nil, fmt.Errorf("getting pipeline schedule %d for project %d: %w", s.ID, p.ID, err)
 			}
 			detailed = append(detailed, d)

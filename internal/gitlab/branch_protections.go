@@ -29,6 +29,9 @@ func (c *Client) ListProtectedBranches(ctx context.Context, projects []*gl.Proje
 		for {
 			page, resp, err := c.api.ProtectedBranches.ListProtectedBranches(p.ID, opts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "protected branches", p.PathWithNamespace) {
+					break
+				}
 				return nil, fmt.Errorf("listing protected branches for project %d: %w", p.ID, err)
 			}
 			branches = append(branches, page...)
