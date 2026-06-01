@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/xMoelletschi/terraform-gitlab-drift/internal/gitlab"
@@ -26,6 +27,7 @@ var (
 	targetRepo       string
 	mrDestPath       string
 	mrBranch         string
+	scanTimeout      time.Duration
 )
 
 var scanCmd = &cobra.Command{
@@ -44,10 +46,21 @@ func init() {
 	scanCmd.Flags().StringVar(&targetRepo, "target-repo", "", "GitLab project path or ID for the MR (default: detected from git remote in --terraform-dir)")
 	scanCmd.Flags().StringVar(&mrDestPath, "mr-dest-path", "", "Path within target repo where .tf files go (default: root)")
 	scanCmd.Flags().StringVar(&mrBranch, "mr-branch", "drift/backtrack", "Branch name for the drift MR")
+	scanCmd.Flags().DurationVar(&scanTimeout, "timeout", 0, "Maximum total scan duration (e.g. 30m); 0 disables the timeout")
+}
+
+// withTimeout bounds ctx to d. A non-positive d returns ctx unchanged with a
+// no-op cancel, so the default (0) preserves the previous unbounded behavior.
+func withTimeout(ctx context.Context, d time.Duration) (context.Context, context.CancelFunc) {
+	if d <= 0 {
+		return ctx, func() {}
+	}
+	return context.WithTimeout(ctx, d)
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
-	ctx := cmd.Context()
+	ctx, cancel := withTimeout(cmd.Context(), scanTimeout)
+	defer cancel()
 	token := gitlabToken
 	if token == "" {
 		token = os.Getenv("GITLAB_TOKEN")
