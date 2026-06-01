@@ -33,6 +33,33 @@ func TestBranchProtectionResourceNameWildcard(t *testing.T) {
 	}
 }
 
+func TestBranchProtectionResourceNamesCollision(t *testing.T) {
+	project := &gl.Project{
+		Path:      "my-project",
+		Namespace: &gl.ProjectNamespace{FullPath: "my-group"},
+	}
+	// All three branch names normalize to the same base label and must stay unique.
+	branches := []*gl.ProtectedBranch{
+		{Name: "release.v1"},
+		{Name: "release-v1"},
+		{Name: "release_v1"},
+	}
+	got := branchProtectionResourceNames(project, branches)
+	want := []string{
+		"my_group_my_project_release_v1",
+		"my_group_my_project_release_v1_1",
+		"my_group_my_project_release_v1_2",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %d names, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("names[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
 func TestWriteBranchProtections_Free(t *testing.T) {
 	project := &gl.Project{
 		ID:                1,

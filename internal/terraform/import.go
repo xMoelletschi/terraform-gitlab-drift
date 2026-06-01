@@ -160,9 +160,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if p == nil {
 				continue
 			}
-			for _, b := range resources.ProtectedBranches[p.ID] {
-				name := branchProtectionResourceName(p, b)
-				key := "gitlab_branch_protection." + name
+			branches := resources.ProtectedBranches[p.ID]
+			names := branchProtectionResourceNames(p, branches)
+			for i, b := range branches {
+				key := "gitlab_branch_protection." + names[i]
 				if !existingResources[key] {
 					cmds = append(cmds, ImportCommand{
 						Address: key,
