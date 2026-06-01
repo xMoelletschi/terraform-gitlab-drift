@@ -198,9 +198,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if g == nil {
 				continue
 			}
-			for _, h := range resources.GroupHooks[g.ID] {
-				name := groupHookResourceName(g, h)
-				key := "gitlab_group_hook." + name
+			hooks := resources.GroupHooks[g.ID]
+			names := groupHookResourceNames(g, hooks)
+			for i, h := range hooks {
+				key := "gitlab_group_hook." + names[i]
 				if !existingResources[key] {
 					cmds = append(cmds, ImportCommand{
 						Address: key,
@@ -214,9 +215,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if p == nil {
 				continue
 			}
-			for _, h := range resources.ProjectHooks[p.ID] {
-				name := projectHookResourceName(p, h)
-				key := "gitlab_project_hook." + name
+			hooks := resources.ProjectHooks[p.ID]
+			names := projectHookResourceNames(p, hooks)
+			for i, h := range hooks {
+				key := "gitlab_project_hook." + names[i]
 				if !existingResources[key] {
 					cmds = append(cmds, ImportCommand{
 						Address: key,
