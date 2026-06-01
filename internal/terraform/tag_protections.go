@@ -1,7 +1,6 @@
 package terraform
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/hashicorp/hcl/v2"
@@ -15,24 +14,13 @@ func tagProtectionResourceName(p *gl.Project, t *gl.ProtectedTag) string {
 }
 
 // tagProtectionResourceNames returns deterministic, collision-free terraform
-// resource names for one project's protected tags. Distinct tag names can
-// normalize to the same label (e.g. "v1.0" and "v1-0" both become "v1_0"); the
-// second and later collisions get a numeric suffix so every block stays unique.
-// The writer and the import generator must call this with the same tag slice so
-// the names they emit agree.
+// resource names for one project's protected tags.
 func tagProtectionResourceNames(p *gl.Project, tags []*gl.ProtectedTag) []string {
-	names := make([]string, len(tags))
-	used := make(map[string]bool, len(tags))
+	bases := make([]string, len(tags))
 	for i, t := range tags {
-		base := tagProtectionResourceName(p, t)
-		name := base
-		for n := 1; used[name]; n++ {
-			name = fmt.Sprintf("%s_%d", base, n)
-		}
-		used[name] = true
-		names[i] = name
+		bases[i] = tagProtectionResourceName(p, t)
 	}
-	return names
+	return dedupeResourceNames(bases)
 }
 
 func isBaseTagAccessLevel(l *gl.TagAccessDescription) bool {
