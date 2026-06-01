@@ -36,39 +36,21 @@ func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project)
 		projectOpts := &gl.GetJobTokenInboundAllowListOptions{
 			ListOptions: gl.ListOptions{Page: 1, PerPage: 100},
 		}
-		var allowedProjects []*gl.Project
-		for {
-			page, resp, err := c.api.JobTokenScope.GetProjectJobTokenInboundAllowList(p.ID, projectOpts, gl.WithContext(ctx))
-			if err != nil {
-				if skipInaccessible(err, "job token inbound allowlist", p.PathWithNamespace) {
-					break
-				}
-				return nil, fmt.Errorf("listing job token inbound allowlist projects for project %d: %w", p.ID, err)
-			}
-			allowedProjects = append(allowedProjects, page...)
-			if resp.NextPage == 0 {
-				break
-			}
-			projectOpts.Page = resp.NextPage
+		allowedProjects, err := paginate(&projectOpts.ListOptions, "job token inbound allowlist", p.PathWithNamespace, func() ([]*gl.Project, *gl.Response, error) {
+			return c.api.JobTokenScope.GetProjectJobTokenInboundAllowList(p.ID, projectOpts, gl.WithContext(ctx))
+		})
+		if err != nil {
+			return nil, fmt.Errorf("listing job token inbound allowlist projects for project %d: %w", p.ID, err)
 		}
 
 		groupOpts := &gl.GetJobTokenAllowlistGroupsOptions{
 			ListOptions: gl.ListOptions{Page: 1, PerPage: 100},
 		}
-		var allowedGroups []*gl.Group
-		for {
-			page, resp, err := c.api.JobTokenScope.GetJobTokenAllowlistGroups(p.ID, groupOpts, gl.WithContext(ctx))
-			if err != nil {
-				if skipInaccessible(err, "job token allowlist groups", p.PathWithNamespace) {
-					break
-				}
-				return nil, fmt.Errorf("listing job token allowlist groups for project %d: %w", p.ID, err)
-			}
-			allowedGroups = append(allowedGroups, page...)
-			if resp.NextPage == 0 {
-				break
-			}
-			groupOpts.Page = resp.NextPage
+		allowedGroups, err := paginate(&groupOpts.ListOptions, "job token allowlist groups", p.PathWithNamespace, func() ([]*gl.Group, *gl.Response, error) {
+			return c.api.JobTokenScope.GetJobTokenAllowlistGroups(p.ID, groupOpts, gl.WithContext(ctx))
+		})
+		if err != nil {
+			return nil, fmt.Errorf("listing job token allowlist groups for project %d: %w", p.ID, err)
 		}
 
 		// Mirror the provider's Read behavior so HCL matches state.

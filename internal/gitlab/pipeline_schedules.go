@@ -24,20 +24,11 @@ func (c *Client) ListPipelineSchedules(ctx context.Context, projects []*gl.Proje
 				PerPage: 100,
 			},
 		}
-		var schedules []*gl.PipelineSchedule
-		for {
-			page, resp, err := c.api.PipelineSchedules.ListPipelineSchedules(p.ID, opts, gl.WithContext(ctx))
-			if err != nil {
-				if skipInaccessible(err, "pipeline schedules", p.PathWithNamespace) {
-					break
-				}
-				return nil, fmt.Errorf("listing pipeline schedules for project %d: %w", p.ID, err)
-			}
-			schedules = append(schedules, page...)
-			if resp.NextPage == 0 {
-				break
-			}
-			opts.Page = resp.NextPage
+		schedules, err := paginate(&opts.ListOptions, "pipeline schedules", p.PathWithNamespace, func() ([]*gl.PipelineSchedule, *gl.Response, error) {
+			return c.api.PipelineSchedules.ListPipelineSchedules(p.ID, opts, gl.WithContext(ctx))
+		})
+		if err != nil {
+			return nil, fmt.Errorf("listing pipeline schedules for project %d: %w", p.ID, err)
 		}
 
 		// Fetch detail for each schedule to get variables.
