@@ -126,9 +126,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if g == nil {
 				continue
 			}
-			for _, v := range resources.GroupVariables[g.ID] {
-				name := groupVariableResourceName(g, v)
-				key := "gitlab_group_variable." + name
+			vars := resources.GroupVariables[g.ID]
+			names := groupVariableResourceNames(g, vars)
+			for i, v := range vars {
+				key := "gitlab_group_variable." + names[i]
 				if !existingResources[key] {
 					cmds = append(cmds, ImportCommand{
 						Address: key,
@@ -142,9 +143,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if p == nil {
 				continue
 			}
-			for _, v := range resources.ProjectVariables[p.ID] {
-				name := projectVariableResourceName(p, v)
-				key := "gitlab_project_variable." + name
+			vars := resources.ProjectVariables[p.ID]
+			names := projectVariableResourceNames(p, vars)
+			for i, v := range vars {
+				key := "gitlab_project_variable." + names[i]
 				if !existingResources[key] {
 					cmds = append(cmds, ImportCommand{
 						Address: key,

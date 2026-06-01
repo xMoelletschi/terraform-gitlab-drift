@@ -25,6 +25,26 @@ func projectVariableResourceName(p *gl.Project, v *gl.ProjectVariable) string {
 	return variableResourceName(projectResourceName(p), v.Key, v.EnvironmentScope)
 }
 
+// groupVariableResourceNames returns deterministic, collision-free terraform
+// resource names for one group's variables.
+func groupVariableResourceNames(g *gl.Group, vars []*gl.GroupVariable) []string {
+	bases := make([]string, len(vars))
+	for i, v := range vars {
+		bases[i] = groupVariableResourceName(g, v)
+	}
+	return dedupeResourceNames(bases)
+}
+
+// projectVariableResourceNames returns deterministic, collision-free terraform
+// resource names for one project's variables.
+func projectVariableResourceNames(p *gl.Project, vars []*gl.ProjectVariable) []string {
+	bases := make([]string, len(vars))
+	for i, v := range vars {
+		bases[i] = projectVariableResourceName(p, v)
+	}
+	return dedupeResourceNames(bases)
+}
+
 func writeVariableAttrs(body *hclwrite.Body, key, value, varType, envScope, description string, protected, raw bool) {
 	body.SetAttributeValue("key", cty.StringVal(key))
 	body.SetAttributeValue("value", cty.StringVal(value))
@@ -43,13 +63,13 @@ func WriteGroupVariables(g *gl.Group, vars []*gl.GroupVariable, w io.Writer) err
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 	groupName := normalizeToTerraformName(g.Path)
+	names := groupVariableResourceNames(g, vars)
 
 	for i, v := range vars {
 		if i > 0 {
 			rootBody.AppendNewline()
 		}
-		name := groupVariableResourceName(g, v)
-		block := rootBody.AppendNewBlock("resource", []string{"gitlab_group_variable", name})
+		block := rootBody.AppendNewBlock("resource", []string{"gitlab_group_variable", names[i]})
 		body := block.Body()
 
 		body.SetAttributeTraversal("group", hcl.Traversal{
@@ -68,13 +88,13 @@ func WriteProjectVariables(p *gl.Project, vars []*gl.ProjectVariable, w io.Write
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 	projName := projectResourceName(p)
+	names := projectVariableResourceNames(p, vars)
 
 	for i, v := range vars {
 		if i > 0 {
 			rootBody.AppendNewline()
 		}
-		name := projectVariableResourceName(p, v)
-		block := rootBody.AppendNewBlock("resource", []string{"gitlab_project_variable", name})
+		block := rootBody.AppendNewBlock("resource", []string{"gitlab_project_variable", names[i]})
 		body := block.Body()
 
 		body.SetAttributeTraversal("project", hcl.Traversal{
