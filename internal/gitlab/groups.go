@@ -8,7 +8,7 @@ import (
 	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
-func (c *Client) ListGroups(ctx context.Context) ([]*gl.Group, error) {
+func (c *Client) ListGroups(ctx context.Context, cfg FilterConfig) ([]*gl.Group, error) {
 	var allGroups []*gl.Group
 
 	if c.group != "" {
@@ -38,7 +38,7 @@ func (c *Client) ListGroups(ctx context.Context) ([]*gl.Group, error) {
 			}
 			opts.Page = resp.NextPage
 		}
-		return filterDeletedGroups(allGroups), nil
+		return filterGroups(allGroups, cfg), nil
 	}
 
 	opts := &gl.ListGroupsOptions{
@@ -58,17 +58,5 @@ func (c *Client) ListGroups(ctx context.Context) ([]*gl.Group, error) {
 		}
 		opts.Page = resp.NextPage
 	}
-	return filterDeletedGroups(allGroups), nil
-}
-
-func filterDeletedGroups(groups []*gl.Group) []*gl.Group {
-	filtered := make([]*gl.Group, 0, len(groups))
-	for _, g := range groups {
-		if g.MarkedForDeletionOn != nil {
-			slog.Debug("skipping group pending deletion", "group", g.FullPath)
-			continue
-		}
-		filtered = append(filtered, g)
-	}
-	return filtered
+	return filterGroups(allGroups, cfg), nil
 }

@@ -24,10 +24,12 @@ var (
 	showDiff         bool
 	skipResources    []string
 	includeResources []string
-	targetRepo       string
-	mrDestPath       string
-	mrBranch         string
-	scanTimeout      time.Duration
+	targetRepo          string
+	mrDestPath          string
+	mrBranch            string
+	scanTimeout         time.Duration
+	showPendingDeletion bool
+	hideArchived        bool
 )
 
 var scanCmd = &cobra.Command{
@@ -47,6 +49,8 @@ func init() {
 	scanCmd.Flags().StringVar(&mrDestPath, "mr-dest-path", "", "Path within target repo where .tf files go (default: root)")
 	scanCmd.Flags().StringVar(&mrBranch, "mr-branch", "drift/backtrack", "Branch name for the drift MR")
 	scanCmd.Flags().DurationVar(&scanTimeout, "timeout", 0, "Maximum total scan duration (e.g. 30m); 0 disables the timeout")
+	scanCmd.Flags().BoolVar(&showPendingDeletion, "show-pending-deletion", false, "Include groups/projects in the deletion grace period (hidden by default)")
+	scanCmd.Flags().BoolVar(&hideArchived, "hide-archived", false, "Skip archived projects (shown by default)")
 }
 
 // withTimeout bounds ctx to d. A non-positive d returns ctx unchanged with a
@@ -108,8 +112,13 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	slog.Debug("fetching resources from GitLab API")
 
+	filterCfg := gitlab.FilterConfig{
+		ShowPendingDeletion: showPendingDeletion,
+		HideArchived:        hideArchived,
+	}
+
 	// Fetch resources from GitLab API
-	resources, err := client.FetchAll(ctx, skipSet)
+	resources, err := client.FetchAll(ctx, skipSet, filterCfg)
 	if err != nil {
 		return fmt.Errorf("fetching resources: %w", err)
 	}

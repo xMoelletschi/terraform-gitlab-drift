@@ -42,14 +42,14 @@ func NewClient(token, baseURL, group string) (*Client, error) {
 	return &Client{api: client, group: group}, nil
 }
 
-func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set) (*Resources, error) {
-	groups, err := c.ListGroups(ctx)
+func (c *Client) FetchAll(ctx context.Context, skipSet skip.Set, cfg FilterConfig) (*Resources, error) {
+	groups, err := c.ListGroups(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("listing groups: %w", err)
 	}
 	slog.Info("fetched groups", "count", len(groups))
 
-	projects, err := c.ListProjects(ctx)
+	projects, err := c.ListProjects(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("listing projects: %w", err)
 	}
