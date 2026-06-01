@@ -251,8 +251,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if p == nil {
 				continue
 			}
-			for _, s := range resources.PipelineSchedules[p.ID] {
-				schedName := pipelineScheduleResourceName(p, s)
+			schedules := resources.PipelineSchedules[p.ID]
+			schedNames := pipelineScheduleResourceNames(p, schedules)
+			for i, s := range schedules {
+				schedName := schedNames[i]
 				schedKey := "gitlab_pipeline_schedule." + schedName
 				if !existingResources[schedKey] {
 					cmds = append(cmds, ImportCommand{
@@ -260,9 +262,9 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 						ID:      fmt.Sprintf("%d:%d", p.ID, s.ID),
 					})
 				}
-				for _, v := range s.Variables {
-					varName := pipelineScheduleVariableResourceName(p, s, v)
-					varKey := "gitlab_pipeline_schedule_variable." + varName
+				varNames := pipelineScheduleVariableResourceNames(schedName, s.Variables)
+				for j, v := range s.Variables {
+					varKey := "gitlab_pipeline_schedule_variable." + varNames[j]
 					if !existingResources[varKey] {
 						cmds = append(cmds, ImportCommand{
 							Address: varKey,
