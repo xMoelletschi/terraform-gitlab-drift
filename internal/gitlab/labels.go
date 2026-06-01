@@ -30,20 +30,11 @@ func (c *Client) ListGroupLabels(ctx context.Context, groups []*gl.Group) (Group
 			},
 			OnlyGroupLabels: gl.Ptr(true),
 		}
-		var labels []*gl.GroupLabel
-		for {
-			page, resp, err := c.api.GroupLabels.ListGroupLabels(g.ID, opts, gl.WithContext(ctx))
-			if err != nil {
-				if skipInaccessible(err, "group labels", g.FullPath) {
-					break
-				}
-				return nil, fmt.Errorf("listing labels for group %d: %w", g.ID, err)
-			}
-			labels = append(labels, page...)
-			if resp.NextPage == 0 {
-				break
-			}
-			opts.Page = resp.NextPage
+		labels, err := paginate(&opts.ListOptions, "group labels", g.FullPath, func() ([]*gl.GroupLabel, *gl.Response, error) {
+			return c.api.GroupLabels.ListGroupLabels(g.ID, opts, gl.WithContext(ctx))
+		})
+		if err != nil {
+			return nil, fmt.Errorf("listing labels for group %d: %w", g.ID, err)
 		}
 		var owned []*gl.GroupLabel
 		for _, l := range labels {
@@ -74,24 +65,17 @@ func (c *Client) ListProjectLabels(ctx context.Context, projects []*gl.Project) 
 				PerPage: 100,
 			},
 		}
+		all, err := paginate(&opts.ListOptions, "project labels", p.PathWithNamespace, func() ([]*gl.Label, *gl.Response, error) {
+			return c.api.Labels.ListLabels(p.ID, opts, gl.WithContext(ctx))
+		})
+		if err != nil {
+			return nil, fmt.Errorf("listing labels for project %d: %w", p.ID, err)
+		}
 		var labels []*gl.Label
-		for {
-			page, resp, err := c.api.Labels.ListLabels(p.ID, opts, gl.WithContext(ctx))
-			if err != nil {
-				if skipInaccessible(err, "project labels", p.PathWithNamespace) {
-					break
-				}
-				return nil, fmt.Errorf("listing labels for project %d: %w", p.ID, err)
+		for _, l := range all {
+			if l.IsProjectLabel {
+				labels = append(labels, l)
 			}
-			for _, l := range page {
-				if l.IsProjectLabel {
-					labels = append(labels, l)
-				}
-			}
-			if resp.NextPage == 0 {
-				break
-			}
-			opts.Page = resp.NextPage
 		}
 		if len(labels) > 0 {
 			result[p.ID] = labels
