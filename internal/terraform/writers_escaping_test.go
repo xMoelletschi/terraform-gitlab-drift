@@ -27,14 +27,16 @@ func TestWritePipelineSchedules_EscapesSpecialChars(t *testing.T) {
 	}
 	schedules := []*gl.PipelineSchedule{
 		{
-			ID:           10,
-			Description:  "Nightly build", // safe: also used as the resource name
-			Ref:          "main",
-			Cron:         "0 2 * * *",
-			CronTimezone: "Europe/Vienna",
-			Active:       true,
+			ID: 10,
+			// Special chars here exercise both fixes at once: the resource name
+			// (sanitized by normalizeName) and the description value (escaped by
+			// hclString).
+			Description:   `nightly "build" ${env}`,
+			Ref:           "main",
+			Cron:          "0 2 * * *",
+			CronTimezone:  "Europe/Vienna",
+			Active:        true,
 			Variables: []*gl.PipelineVariable{
-				// A CI variable value is free text and not part of any name.
 				{Key: "MSG", Value: `say "hi"` + "\nline2 ${x}", VariableType: "env_var"},
 			},
 		},

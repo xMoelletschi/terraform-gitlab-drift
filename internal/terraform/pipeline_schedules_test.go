@@ -105,6 +105,12 @@ func TestNormalizeName(t *testing.T) {
 		{"a--b//c  d..e", "a_b_c_d_e"},
 		{"trailing-", "trailing"},
 		{"DEPLOY_ENV", "deploy_env"},
+		// Characters illegal in a terraform identifier must be sanitized, not
+		// passed through (which would produce an invalid resource label).
+		{`P1: "critical"`, "p1_critical"},
+		{"deploy (prod)!", "deploy_prod"},
+		{"a${b}", "a_b"},
+		{"won't fix", "won_t_fix"},
 	}
 	for _, tt := range tests {
 		got := normalizeName(tt.input)

@@ -9,10 +9,19 @@ import (
 )
 
 func normalizeName(s string) string {
-	normalized := strings.ToLower(s)
-	for _, ch := range []string{"/", "-", " ", "."} {
-		normalized = strings.ReplaceAll(normalized, ch, "_")
-	}
+	// Lowercase, then replace every character that is not valid in a terraform
+	// identifier ([a-z0-9_]) with an underscore. This covers the common
+	// separators (/ - space .) as well as anything else a free-text GitLab field
+	// might contain (quotes, $, {, (, :, ', ...), which would otherwise produce
+	// an invalid resource label.
+	normalized := strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '_':
+			return r
+		default:
+			return '_'
+		}
+	}, strings.ToLower(s))
 	// Collapse consecutive underscores.
 	for strings.Contains(normalized, "__") {
 		normalized = strings.ReplaceAll(normalized, "__", "_")
