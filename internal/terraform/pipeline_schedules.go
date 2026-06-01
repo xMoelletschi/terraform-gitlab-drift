@@ -58,13 +58,13 @@ func WritePipelineSchedules(p *gl.Project, schedules []*gl.PipelineSchedule, w i
 		}
 		if _, err := fmt.Fprintf(w, `resource "gitlab_pipeline_schedule" "%s" {
   project       = gitlab_project.%s.id
-  description   = "%s"
-  ref           = "%s"
-  cron          = "%s"
-  cron_timezone = "%s"
+  description   = %s
+  ref           = %s
+  cron          = %s
+  cron_timezone = %s
   active        = %t
 }
-`, schedName, projName, s.Description, s.Ref, s.Cron, s.CronTimezone, s.Active); err != nil {
+`, schedName, projName, hclString(s.Description), hclString(s.Ref), hclString(s.Cron), hclString(s.CronTimezone), s.Active); err != nil {
 			return err
 		}
 
@@ -74,11 +74,11 @@ func WritePipelineSchedules(p *gl.Project, schedules []*gl.PipelineSchedule, w i
 resource "gitlab_pipeline_schedule_variable" "%s" {
   project              = gitlab_project.%s.id
   pipeline_schedule_id = gitlab_pipeline_schedule.%s.pipeline_schedule_id
-  key                  = "%s"
-  value                = "%s"
-  variable_type        = "%s"
+  key                  = %s
+  value                = %s
+  variable_type        = %s
 }
-`, varNames[j], projName, schedName, v.Key, v.Value, string(v.VariableType)); err != nil {
+`, varNames[j], projName, schedName, hclString(v.Key), hclString(v.Value), hclString(string(v.VariableType))); err != nil {
 				return err
 			}
 		}

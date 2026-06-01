@@ -25,11 +25,11 @@ func WriteGroupLabelVariable(groups []*gl.Group, groupLabels gitlab.GroupLabels,
 		if len(labels) == 0 {
 			continue
 		}
-		fmt.Fprintf(&b, "    \"%s\" = {\n", g.FullPath)
+		fmt.Fprintf(&b, "    %s = {\n", hclString(g.FullPath))
 		for _, l := range labels {
-			fmt.Fprintf(&b, "      \"%s\" = {\n", l.Name)
-			fmt.Fprintf(&b, "        color       = \"%s\"\n", l.Color)
-			fmt.Fprintf(&b, "        description = \"%s\"\n", l.Description)
+			fmt.Fprintf(&b, "      %s = {\n", hclString(l.Name))
+			fmt.Fprintf(&b, "        color       = %s\n", hclString(l.Color))
+			fmt.Fprintf(&b, "        description = %s\n", hclString(l.Description))
 			b.WriteString("      }\n")
 		}
 		b.WriteString("    }\n")
@@ -70,11 +70,11 @@ func WriteProjectLabelVariable(projects []*gl.Project, projectLabels gitlab.Proj
 		if len(labels) == 0 {
 			continue
 		}
-		fmt.Fprintf(&b, "    \"%s\" = {\n", path)
+		fmt.Fprintf(&b, "    %s = {\n", hclString(path))
 		for _, l := range labels {
-			fmt.Fprintf(&b, "      \"%s\" = {\n", l.Name)
-			fmt.Fprintf(&b, "        color       = \"%s\"\n", l.Color)
-			fmt.Fprintf(&b, "        description = \"%s\"\n", l.Description)
+			fmt.Fprintf(&b, "      %s = {\n", hclString(l.Name))
+			fmt.Fprintf(&b, "        color       = %s\n", hclString(l.Color))
+			fmt.Fprintf(&b, "        description = %s\n", hclString(l.Description))
 			b.WriteString("      }\n")
 		}
 		b.WriteString("    }\n")
