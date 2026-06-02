@@ -286,11 +286,20 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 // PrintImportCommands writes terraform import commands to w.
 func PrintImportCommands(w io.Writer, cmds []ImportCommand) error {
 	for _, cmd := range cmds {
-		if _, err := fmt.Fprintf(w, "terraform import '%s' '%s'\n", cmd.Address, cmd.ID); err != nil {
+		if _, err := fmt.Fprintf(w, "terraform import %s %s\n", shellSingleQuote(cmd.Address), shellSingleQuote(cmd.ID)); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// shellSingleQuote wraps s as a single POSIX shell word, escaping any embedded
+// single quote as '\'' (close, escaped-quote, reopen). The import IDs and
+// addresses embed raw GitLab data (branch/tag names, usernames, ...) that an
+// operator pastes into a shell, so a value containing a single quote must not
+// be able to break out of the quoting and execute injected commands.
+func shellSingleQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 // projectResourceName computes the terraform resource name for a project,

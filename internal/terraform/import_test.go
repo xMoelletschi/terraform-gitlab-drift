@@ -349,6 +349,25 @@ func TestPrintImportCommands(t *testing.T) {
 	}
 }
 
+func TestPrintImportCommands_EscapesSingleQuotes(t *testing.T) {
+	// A branch/tag name (embedded raw in the import ID) can contain a single
+	// quote; the emitted shell line must not let it break out of the
+	// single-quoted argument when an operator pastes it into a shell.
+	cmds := []ImportCommand{
+		{Address: "gitlab_branch_protection.proj_main", ID: `1:x'; touch pwned #`},
+	}
+
+	var buf bytes.Buffer
+	if err := PrintImportCommands(&buf, cmds); err != nil {
+		t.Fatalf("PrintImportCommands error: %v", err)
+	}
+
+	want := `terraform import 'gitlab_branch_protection.proj_main' '1:x'\''; touch pwned #'` + "\n"
+	if buf.String() != want {
+		t.Errorf("single quote not safely escaped:\ngot:  %s\nwant: %s", buf.String(), want)
+	}
+}
+
 func TestGenerateImportCommandsNewPipelineSchedule(t *testing.T) {
 	resources := &gitlab.Resources{
 		Projects: []*gl.Project{
