@@ -28,21 +28,17 @@ func projectVariableResourceName(p *gl.Project, v *gl.ProjectVariable) string {
 // groupVariableResourceNames returns deterministic, collision-free terraform
 // resource names for one group's variables.
 func groupVariableResourceNames(g *gl.Group, vars []*gl.GroupVariable) []string {
-	bases := make([]string, len(vars))
-	for i, v := range vars {
-		bases[i] = groupVariableResourceName(g, v)
-	}
-	return dedupeResourceNames(bases)
+	return buildResourceNames(vars, func(v *gl.GroupVariable) string {
+		return groupVariableResourceName(g, v)
+	})
 }
 
 // projectVariableResourceNames returns deterministic, collision-free terraform
 // resource names for one project's variables.
 func projectVariableResourceNames(p *gl.Project, vars []*gl.ProjectVariable) []string {
-	bases := make([]string, len(vars))
-	for i, v := range vars {
-		bases[i] = projectVariableResourceName(p, v)
-	}
-	return dedupeResourceNames(bases)
+	return buildResourceNames(vars, func(v *gl.ProjectVariable) string {
+		return projectVariableResourceName(p, v)
+	})
 }
 
 func writeVariableAttrs(body *hclwrite.Body, key, value, varType, envScope, description string, protected, raw bool) {

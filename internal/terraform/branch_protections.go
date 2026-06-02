@@ -22,11 +22,9 @@ func branchProtectionResourceName(p *gl.Project, b *gl.ProtectedBranch) string {
 // branchProtectionResourceNames returns deterministic, collision-free terraform
 // resource names for one project's protected branches.
 func branchProtectionResourceNames(p *gl.Project, branches []*gl.ProtectedBranch) []string {
-	bases := make([]string, len(branches))
-	for i, b := range branches {
-		bases[i] = branchProtectionResourceName(p, b)
-	}
-	return dedupeResourceNames(bases)
+	return buildResourceNames(branches, func(b *gl.ProtectedBranch) string {
+		return branchProtectionResourceName(p, b)
+	})
 }
 
 const adminAccessLevel gl.AccessLevelValue = 60

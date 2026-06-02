@@ -37,22 +37,18 @@ func pipelineScheduleResourceName(p *gl.Project, s *gl.PipelineSchedule) string 
 // pipelineScheduleResourceNames returns deterministic, collision-free terraform
 // resource names for one project's pipeline schedules.
 func pipelineScheduleResourceNames(p *gl.Project, schedules []*gl.PipelineSchedule) []string {
-	bases := make([]string, len(schedules))
-	for i, s := range schedules {
-		bases[i] = pipelineScheduleResourceName(p, s)
-	}
-	return dedupeResourceNames(bases)
+	return buildResourceNames(schedules, func(s *gl.PipelineSchedule) string {
+		return pipelineScheduleResourceName(p, s)
+	})
 }
 
 // pipelineScheduleVariableResourceNames returns deterministic, collision-free
 // terraform resource names for one schedule's variables, prefixed with the
 // schedule's already-deduped resource name.
 func pipelineScheduleVariableResourceNames(schedName string, vars []*gl.PipelineVariable) []string {
-	bases := make([]string, len(vars))
-	for i, v := range vars {
-		bases[i] = schedName + "_" + normalizeName(v.Key)
-	}
-	return dedupeResourceNames(bases)
+	return buildResourceNames(vars, func(v *gl.PipelineVariable) string {
+		return schedName + "_" + normalizeName(v.Key)
+	})
 }
 
 func WritePipelineSchedules(p *gl.Project, schedules []*gl.PipelineSchedule, w io.Writer) error {

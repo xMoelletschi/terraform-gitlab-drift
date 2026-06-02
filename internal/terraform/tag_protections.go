@@ -16,11 +16,9 @@ func tagProtectionResourceName(p *gl.Project, t *gl.ProtectedTag) string {
 // tagProtectionResourceNames returns deterministic, collision-free terraform
 // resource names for one project's protected tags.
 func tagProtectionResourceNames(p *gl.Project, tags []*gl.ProtectedTag) []string {
-	bases := make([]string, len(tags))
-	for i, t := range tags {
-		bases[i] = tagProtectionResourceName(p, t)
-	}
-	return dedupeResourceNames(bases)
+	return buildResourceNames(tags, func(t *gl.ProtectedTag) string {
+		return tagProtectionResourceName(p, t)
+	})
 }
 
 func isBaseTagAccessLevel(l *gl.TagAccessDescription) bool {

@@ -28,21 +28,17 @@ func groupHookResourceName(g *gl.Group, h *gl.GroupHook) string {
 // projectHookResourceNames returns deterministic, collision-free terraform
 // resource names for one project's hooks.
 func projectHookResourceNames(p *gl.Project, hooks []*gl.ProjectHook) []string {
-	bases := make([]string, len(hooks))
-	for i, h := range hooks {
-		bases[i] = projectHookResourceName(p, h)
-	}
-	return dedupeResourceNames(bases)
+	return buildResourceNames(hooks, func(h *gl.ProjectHook) string {
+		return projectHookResourceName(p, h)
+	})
 }
 
 // groupHookResourceNames returns deterministic, collision-free terraform
 // resource names for one group's hooks.
 func groupHookResourceNames(g *gl.Group, hooks []*gl.GroupHook) []string {
-	bases := make([]string, len(hooks))
-	for i, h := range hooks {
-		bases[i] = groupHookResourceName(g, h)
-	}
-	return dedupeResourceNames(bases)
+	return buildResourceNames(hooks, func(h *gl.GroupHook) string {
+		return groupHookResourceName(g, h)
+	})
 }
 
 func WriteProjectHooks(p *gl.Project, hooks []*gl.ProjectHook, w io.Writer) error {

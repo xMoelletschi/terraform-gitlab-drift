@@ -11,6 +11,19 @@ import "fmt"
 //
 // The writer and the import generator must build base names the same way and pass
 // the same slice so the names they emit agree.
+// buildResourceNames maps each item to a base name via name, then returns
+// collision-free names via dedupeResourceNames. It removes the repeated
+// "allocate a bases slice, loop, dedupe" boilerplate from the per-resource
+// xResourceNames functions, so a new resource type only needs its singular
+// name function.
+func buildResourceNames[T any](items []T, name func(T) string) []string {
+	bases := make([]string, len(items))
+	for i, item := range items {
+		bases[i] = name(item)
+	}
+	return dedupeResourceNames(bases)
+}
+
 func dedupeResourceNames(bases []string) []string {
 	names := make([]string, len(bases))
 	used := make(map[string]bool, len(bases))
