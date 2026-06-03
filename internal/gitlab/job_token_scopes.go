@@ -19,6 +19,7 @@ type JobTokenScopes = map[int64]*JobTokenScope
 func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project) (JobTokenScopes, error) {
 	result := make(JobTokenScopes, len(projects))
 
+projectLoop:
 	for _, p := range projects {
 		if p == nil {
 			continue
@@ -33,24 +34,48 @@ func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project)
 			return nil, fmt.Errorf("getting job token access settings for project %d: %w", p.ID, err)
 		}
 
+		// The job token scope is a composite resource (settings + both
+		// allowlists). These allowlist fetches deliberately do NOT use the
+		// graceful paginate helper: if an allowlist is inaccessible we skip the
+		// whole project (continue projectLoop) rather than emit a scope with a
+		// misleadingly-empty allowlist, which would read as drift — and on apply
+		// would delete entries we merely could not read.
 		projectOpts := &gl.GetJobTokenInboundAllowListOptions{
 			ListOptions: gl.ListOptions{Page: 1, PerPage: 100},
 		}
-		allowedProjects, err := paginate(&projectOpts.ListOptions, "job token inbound allowlist", p.PathWithNamespace, func() ([]*gl.Project, *gl.Response, error) {
-			return c.api.JobTokenScope.GetProjectJobTokenInboundAllowList(p.ID, projectOpts, gl.WithContext(ctx))
-		})
-		if err != nil {
-			return nil, fmt.Errorf("listing job token inbound allowlist projects for project %d: %w", p.ID, err)
+		var allowedProjects []*gl.Project
+		for {
+			page, resp, err := c.api.JobTokenScope.GetProjectJobTokenInboundAllowList(p.ID, projectOpts, gl.WithContext(ctx))
+			if err != nil {
+				if skipInaccessible(err, "job token inbound allowlist", p.PathWithNamespace) {
+					continue projectLoop
+				}
+				return nil, fmt.Errorf("listing job token inbound allowlist projects for project %d: %w", p.ID, err)
+			}
+			allowedProjects = append(allowedProjects, page...)
+			if resp.NextPage == 0 {
+				break
+			}
+			projectOpts.Page = resp.NextPage
 		}
 
 		groupOpts := &gl.GetJobTokenAllowlistGroupsOptions{
 			ListOptions: gl.ListOptions{Page: 1, PerPage: 100},
 		}
-		allowedGroups, err := paginate(&groupOpts.ListOptions, "job token allowlist groups", p.PathWithNamespace, func() ([]*gl.Group, *gl.Response, error) {
-			return c.api.JobTokenScope.GetJobTokenAllowlistGroups(p.ID, groupOpts, gl.WithContext(ctx))
-		})
-		if err != nil {
-			return nil, fmt.Errorf("listing job token allowlist groups for project %d: %w", p.ID, err)
+		var allowedGroups []*gl.Group
+		for {
+			page, resp, err := c.api.JobTokenScope.GetJobTokenAllowlistGroups(p.ID, groupOpts, gl.WithContext(ctx))
+			if err != nil {
+				if skipInaccessible(err, "job token allowlist groups", p.PathWithNamespace) {
+					continue projectLoop
+				}
+				return nil, fmt.Errorf("listing job token allowlist groups for project %d: %w", p.ID, err)
+			}
+			allowedGroups = append(allowedGroups, page...)
+			if resp.NextPage == 0 {
+				break
+			}
+			groupOpts.Page = resp.NextPage
 		}
 
 		// Mirror the provider's Read behavior so HCL matches state.

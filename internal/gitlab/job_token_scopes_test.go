@@ -2,12 +2,38 @@ package gitlab
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	gl "gitlab.com/gitlab-org/api/client-go/v2"
 	gitlabtesting "gitlab.com/gitlab-org/api/client-go/v2/testing"
 	"go.uber.org/mock/gomock"
 )
+
+// A job token scope is a composite resource (settings + two allowlists). If an
+// allowlist is inaccessible we must skip the WHOLE project, not emit a scope
+// with a misleadingly-empty allowlist (which would look like drift / delete
+// entries on apply). The inbound 403 here must skip project 1 entirely — and
+// the groups allowlist must therefore never be requested.
+func TestListJobTokenScopes_SkipsProjectWhenAllowlistInaccessible(t *testing.T) {
+	tc := gitlabtesting.NewTestClient(t)
+	c := NewClientFromAPI(tc.Client, "mygroup")
+
+	tc.MockJobTokenScope.EXPECT().
+		GetProjectJobTokenAccessSettings(gomock.Any(), gomock.Any()).
+		Return(&gl.JobTokenAccessSettings{InboundEnabled: true}, &gl.Response{}, nil)
+	tc.MockJobTokenScope.EXPECT().
+		GetProjectJobTokenInboundAllowList(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, nil, &gl.ErrorResponse{StatusCode: http.StatusForbidden})
+
+	result, err := c.ListJobTokenScopes(context.Background(), []*gl.Project{{ID: 1, PathWithNamespace: "mygroup/proj"}})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, ok := result[1]; ok {
+		t.Errorf("project with an inaccessible allowlist must be skipped entirely, got %+v", result[1])
+	}
+}
 
 // The provider strips a single self entry on Read; we mirror that so the emitted
 // HCL matches state (see the long comment in job_token_scopes.go).
