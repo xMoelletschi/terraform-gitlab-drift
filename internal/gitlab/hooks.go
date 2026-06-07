@@ -2,10 +2,8 @@ package gitlab
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 
 	gl "gitlab.com/gitlab-org/api/client-go/v2"
 )
@@ -30,17 +28,11 @@ func (c *Client) ListProjectHooks(ctx context.Context, projects []*gl.Project) (
 				PerPage: 100,
 			},
 		}
-		var hooks []*gl.ProjectHook
-		for {
-			page, resp, err := c.api.Projects.ListProjectHooks(p.ID, opts, gl.WithContext(ctx))
-			if err != nil {
-				return nil, fmt.Errorf("listing hooks for project %d: %w", p.ID, err)
-			}
-			hooks = append(hooks, page...)
-			if resp.NextPage == 0 {
-				break
-			}
-			opts.Page = resp.NextPage
+		hooks, err := paginate(&opts.ListOptions, "project hooks", p.PathWithNamespace, func() ([]*gl.ProjectHook, *gl.Response, error) {
+			return c.api.Projects.ListProjectHooks(p.ID, opts, gl.WithContext(ctx))
+		})
+		if err != nil {
+			return nil, fmt.Errorf("listing hooks for project %d: %w", p.ID, err)
 		}
 		if len(hooks) > 0 {
 			result[p.ID] = hooks
@@ -63,22 +55,13 @@ func (c *Client) ListGroupHooks(ctx context.Context, groups []*gl.Group) (GroupH
 				PerPage: 100,
 			},
 		}
-		var hooks []*gl.GroupHook
-		for {
-			page, resp, err := c.api.Groups.ListGroupHooks(g.ID, opts, gl.WithContext(ctx))
-			if err != nil {
-				var errResp *gl.ErrorResponse
-				if errors.As(err, &errResp) && errResp.HasStatusCode(http.StatusForbidden) {
-					slog.Warn("group hooks require Premium/Ultimate, skipping", "group", g.FullPath)
-					break
-				}
-				return nil, fmt.Errorf("listing hooks for group %d: %w", g.ID, err)
-			}
-			hooks = append(hooks, page...)
-			if resp.NextPage == 0 {
-				break
-			}
-			opts.Page = resp.NextPage
+		// Group hooks require Premium/Ultimate; a 403 here is expected on Free and
+		// is skipped (via paginate's skipInaccessible) like any inaccessible group.
+		hooks, err := paginate(&opts.ListOptions, "group hooks", g.FullPath, func() ([]*gl.GroupHook, *gl.Response, error) {
+			return c.api.Groups.ListGroupHooks(g.ID, opts, gl.WithContext(ctx))
+		})
+		if err != nil {
+			return nil, fmt.Errorf("listing hooks for group %d: %w", g.ID, err)
 		}
 		if len(hooks) > 0 {
 			result[g.ID] = hooks

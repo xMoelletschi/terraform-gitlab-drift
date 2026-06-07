@@ -126,9 +126,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if g == nil {
 				continue
 			}
-			for _, v := range resources.GroupVariables[g.ID] {
-				name := groupVariableResourceName(g, v)
-				key := "gitlab_group_variable." + name
+			vars := resources.GroupVariables[g.ID]
+			names := groupVariableResourceNames(g, vars)
+			for i, v := range vars {
+				key := "gitlab_group_variable." + names[i]
 				if !existingResources[key] {
 					cmds = append(cmds, ImportCommand{
 						Address: key,
@@ -142,9 +143,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if p == nil {
 				continue
 			}
-			for _, v := range resources.ProjectVariables[p.ID] {
-				name := projectVariableResourceName(p, v)
-				key := "gitlab_project_variable." + name
+			vars := resources.ProjectVariables[p.ID]
+			names := projectVariableResourceNames(p, vars)
+			for i, v := range vars {
+				key := "gitlab_project_variable." + names[i]
 				if !existingResources[key] {
 					cmds = append(cmds, ImportCommand{
 						Address: key,
@@ -160,9 +162,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if p == nil {
 				continue
 			}
-			for _, b := range resources.ProtectedBranches[p.ID] {
-				name := branchProtectionResourceName(p, b)
-				key := "gitlab_branch_protection." + name
+			branches := resources.ProtectedBranches[p.ID]
+			names := branchProtectionResourceNames(p, branches)
+			for i, b := range branches {
+				key := "gitlab_branch_protection." + names[i]
 				if !existingResources[key] {
 					cmds = append(cmds, ImportCommand{
 						Address: key,
@@ -197,9 +200,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if g == nil {
 				continue
 			}
-			for _, h := range resources.GroupHooks[g.ID] {
-				name := groupHookResourceName(g, h)
-				key := "gitlab_group_hook." + name
+			hooks := resources.GroupHooks[g.ID]
+			names := groupHookResourceNames(g, hooks)
+			for i, h := range hooks {
+				key := "gitlab_group_hook." + names[i]
 				if !existingResources[key] {
 					cmds = append(cmds, ImportCommand{
 						Address: key,
@@ -213,9 +217,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if p == nil {
 				continue
 			}
-			for _, h := range resources.ProjectHooks[p.ID] {
-				name := projectHookResourceName(p, h)
-				key := "gitlab_project_hook." + name
+			hooks := resources.ProjectHooks[p.ID]
+			names := projectHookResourceNames(p, hooks)
+			for i, h := range hooks {
+				key := "gitlab_project_hook." + names[i]
 				if !existingResources[key] {
 					cmds = append(cmds, ImportCommand{
 						Address: key,
@@ -250,8 +255,10 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 			if p == nil {
 				continue
 			}
-			for _, s := range resources.PipelineSchedules[p.ID] {
-				schedName := pipelineScheduleResourceName(p, s)
+			schedules := resources.PipelineSchedules[p.ID]
+			schedNames := pipelineScheduleResourceNames(p, schedules)
+			for i, s := range schedules {
+				schedName := schedNames[i]
 				schedKey := "gitlab_pipeline_schedule." + schedName
 				if !existingResources[schedKey] {
 					cmds = append(cmds, ImportCommand{
@@ -259,9 +266,9 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 						ID:      fmt.Sprintf("%d:%d", p.ID, s.ID),
 					})
 				}
-				for _, v := range s.Variables {
-					varName := pipelineScheduleVariableResourceName(p, s, v)
-					varKey := "gitlab_pipeline_schedule_variable." + varName
+				varNames := pipelineScheduleVariableResourceNames(schedName, s.Variables)
+				for j, v := range s.Variables {
+					varKey := "gitlab_pipeline_schedule_variable." + varNames[j]
 					if !existingResources[varKey] {
 						cmds = append(cmds, ImportCommand{
 							Address: varKey,
@@ -279,11 +286,20 @@ func GenerateImportCommands(resources *gitlab.Resources, existingResources map[s
 // PrintImportCommands writes terraform import commands to w.
 func PrintImportCommands(w io.Writer, cmds []ImportCommand) error {
 	for _, cmd := range cmds {
-		if _, err := fmt.Fprintf(w, "terraform import '%s' '%s'\n", cmd.Address, cmd.ID); err != nil {
+		if _, err := fmt.Fprintf(w, "terraform import %s %s\n", shellSingleQuote(cmd.Address), shellSingleQuote(cmd.ID)); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// shellSingleQuote wraps s as a single POSIX shell word, escaping any embedded
+// single quote as '\'' (close, escaped-quote, reopen). The import IDs and
+// addresses embed raw GitLab data (branch/tag names, usernames, ...) that an
+// operator pastes into a shell, so a value containing a single quote must not
+// be able to break out of the quoting and execute injected commands.
+func shellSingleQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 // projectResourceName computes the terraform resource name for a project,

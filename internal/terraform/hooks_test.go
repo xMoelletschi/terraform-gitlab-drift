@@ -25,6 +25,52 @@ func TestNormalizeHookURL(t *testing.T) {
 	}
 }
 
+func TestProjectHookResourceNamesCollision(t *testing.T) {
+	project := &gl.Project{
+		Path:      "my-project",
+		Namespace: &gl.ProjectNamespace{FullPath: "my-group"},
+	}
+	// Both URLs normalize to the same label and must stay unique.
+	hooks := []*gl.ProjectHook{
+		{URL: "https://example.com:8080/hook"},
+		{URL: "https://example.com/8080/hook"},
+	}
+	got := projectHookResourceNames(project, hooks)
+	want := []string{
+		"my_group_my_project_example_com_8080_hook",
+		"my_group_my_project_example_com_8080_hook_1",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %d names, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("names[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+func TestGroupHookResourceNamesCollision(t *testing.T) {
+	group := &gl.Group{Path: "my-group"}
+	hooks := []*gl.GroupHook{
+		{URL: "https://example.com:8080/hook"},
+		{URL: "https://example.com/8080/hook"},
+	}
+	got := groupHookResourceNames(group, hooks)
+	want := []string{
+		"my_group_example_com_8080_hook",
+		"my_group_example_com_8080_hook_1",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %d names, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("names[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
 func TestWriteProjectHooks(t *testing.T) {
 	project := &gl.Project{
 		ID:                1,

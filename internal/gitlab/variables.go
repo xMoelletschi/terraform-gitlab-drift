@@ -28,31 +28,27 @@ func (c *Client) ListProjectVariables(ctx context.Context, projects []*gl.Projec
 				PerPage: 100,
 			},
 		}
+		all, err := paginate(&opts.ListOptions, "project variables", p.PathWithNamespace, func() ([]*gl.ProjectVariable, *gl.Response, error) {
+			return c.api.ProjectVariables.ListVariables(p.ID, opts, gl.WithContext(ctx))
+		})
+		if err != nil {
+			return nil, fmt.Errorf("listing variables for project %d: %w", p.ID, err)
+		}
 		var vars []*gl.ProjectVariable
-		for {
-			page, resp, err := c.api.ProjectVariables.ListVariables(p.ID, opts, gl.WithContext(ctx))
-			if err != nil {
-				return nil, fmt.Errorf("listing variables for project %d: %w", p.ID, err)
+		for _, v := range all {
+			if v.Masked {
+				slog.Debug("skipping masked variable", "key", v.Key, "project", p.PathWithNamespace)
+				continue
 			}
-			for _, v := range page {
-				if v.Masked {
-					slog.Debug("skipping masked variable", "key", v.Key, "project", p.PathWithNamespace)
-					continue
-				}
-				if v.Hidden {
-					slog.Debug("skipping hidden variable", "key", v.Key, "project", p.PathWithNamespace)
-					continue
-				}
-				if v.VariableType == gl.FileVariableType {
-					slog.Debug("skipping file variable", "key", v.Key, "project", p.PathWithNamespace)
-					continue
-				}
-				vars = append(vars, v)
+			if v.Hidden {
+				slog.Debug("skipping hidden variable", "key", v.Key, "project", p.PathWithNamespace)
+				continue
 			}
-			if resp.NextPage == 0 {
-				break
+			if v.VariableType == gl.FileVariableType {
+				slog.Debug("skipping file variable", "key", v.Key, "project", p.PathWithNamespace)
+				continue
 			}
-			opts.Page = resp.NextPage
+			vars = append(vars, v)
 		}
 		if len(vars) > 0 {
 			result[p.ID] = vars
@@ -76,31 +72,27 @@ func (c *Client) ListGroupVariables(ctx context.Context, groups []*gl.Group) (Gr
 				PerPage: 100,
 			},
 		}
+		all, err := paginate(&opts.ListOptions, "group variables", g.FullPath, func() ([]*gl.GroupVariable, *gl.Response, error) {
+			return c.api.GroupVariables.ListVariables(g.ID, opts, gl.WithContext(ctx))
+		})
+		if err != nil {
+			return nil, fmt.Errorf("listing variables for group %d: %w", g.ID, err)
+		}
 		var vars []*gl.GroupVariable
-		for {
-			page, resp, err := c.api.GroupVariables.ListVariables(g.ID, opts, gl.WithContext(ctx))
-			if err != nil {
-				return nil, fmt.Errorf("listing variables for group %d: %w", g.ID, err)
+		for _, v := range all {
+			if v.Masked {
+				slog.Debug("skipping masked variable", "key", v.Key, "group", g.FullPath)
+				continue
 			}
-			for _, v := range page {
-				if v.Masked {
-					slog.Debug("skipping masked variable", "key", v.Key, "group", g.FullPath)
-					continue
-				}
-				if v.Hidden {
-					slog.Debug("skipping hidden variable", "key", v.Key, "group", g.FullPath)
-					continue
-				}
-				if v.VariableType == gl.FileVariableType {
-					slog.Debug("skipping file variable", "key", v.Key, "group", g.FullPath)
-					continue
-				}
-				vars = append(vars, v)
+			if v.Hidden {
+				slog.Debug("skipping hidden variable", "key", v.Key, "group", g.FullPath)
+				continue
 			}
-			if resp.NextPage == 0 {
-				break
+			if v.VariableType == gl.FileVariableType {
+				slog.Debug("skipping file variable", "key", v.Key, "group", g.FullPath)
+				continue
 			}
-			opts.Page = resp.NextPage
+			vars = append(vars, v)
 		}
 		if len(vars) > 0 {
 			result[g.ID] = vars

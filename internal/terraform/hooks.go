@@ -25,17 +25,33 @@ func groupHookResourceName(g *gl.Group, h *gl.GroupHook) string {
 	return normalizeToTerraformName(g.Path) + "_" + normalizeHookURL(h.URL)
 }
 
+// projectHookResourceNames returns deterministic, collision-free terraform
+// resource names for one project's hooks.
+func projectHookResourceNames(p *gl.Project, hooks []*gl.ProjectHook) []string {
+	return buildResourceNames(hooks, func(h *gl.ProjectHook) string {
+		return projectHookResourceName(p, h)
+	})
+}
+
+// groupHookResourceNames returns deterministic, collision-free terraform
+// resource names for one group's hooks.
+func groupHookResourceNames(g *gl.Group, hooks []*gl.GroupHook) []string {
+	return buildResourceNames(hooks, func(h *gl.GroupHook) string {
+		return groupHookResourceName(g, h)
+	})
+}
+
 func WriteProjectHooks(p *gl.Project, hooks []*gl.ProjectHook, w io.Writer) error {
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 	projName := projectResourceName(p)
+	names := projectHookResourceNames(p, hooks)
 
 	for i, h := range hooks {
 		if i > 0 {
 			rootBody.AppendNewline()
 		}
-		name := projectHookResourceName(p, h)
-		block := rootBody.AppendNewBlock("resource", []string{"gitlab_project_hook", name})
+		block := rootBody.AppendNewBlock("resource", []string{"gitlab_project_hook", names[i]})
 		body := block.Body()
 
 		body.SetAttributeTraversal("project", hcl.Traversal{
@@ -81,13 +97,13 @@ func WriteGroupHooks(g *gl.Group, hooks []*gl.GroupHook, w io.Writer) error {
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 	groupName := normalizeToTerraformName(g.Path)
+	names := groupHookResourceNames(g, hooks)
 
 	for i, h := range hooks {
 		if i > 0 {
 			rootBody.AppendNewline()
 		}
-		name := groupHookResourceName(g, h)
-		block := rootBody.AppendNewBlock("resource", []string{"gitlab_group_hook", name})
+		block := rootBody.AppendNewBlock("resource", []string{"gitlab_group_hook", names[i]})
 		body := block.Body()
 
 		body.SetAttributeTraversal("group", hcl.Traversal{

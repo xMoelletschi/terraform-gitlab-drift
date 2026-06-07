@@ -19,6 +19,14 @@ func branchProtectionResourceName(p *gl.Project, b *gl.ProtectedBranch) string {
 	return projectResourceName(p) + "_" + normalizeBranchName(b.Name)
 }
 
+// branchProtectionResourceNames returns deterministic, collision-free terraform
+// resource names for one project's protected branches.
+func branchProtectionResourceNames(p *gl.Project, branches []*gl.ProtectedBranch) []string {
+	return buildResourceNames(branches, func(b *gl.ProtectedBranch) string {
+		return branchProtectionResourceName(p, b)
+	})
+}
+
 const adminAccessLevel gl.AccessLevelValue = 60
 
 // protectionAccessLevel maps an access level to the string used by branch and
@@ -60,13 +68,13 @@ func WriteBranchProtections(p *gl.Project, branches []*gl.ProtectedBranch, premi
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 	projName := projectResourceName(p)
+	names := branchProtectionResourceNames(p, branches)
 
 	for i, b := range branches {
 		if i > 0 {
 			rootBody.AppendNewline()
 		}
-		name := branchProtectionResourceName(p, b)
-		block := rootBody.AppendNewBlock("resource", []string{"gitlab_branch_protection", name})
+		block := rootBody.AppendNewBlock("resource", []string{"gitlab_branch_protection", names[i]})
 		body := block.Body()
 
 		body.SetAttributeTraversal("project", hcl.Traversal{

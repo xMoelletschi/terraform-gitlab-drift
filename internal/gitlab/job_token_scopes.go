@@ -19,6 +19,7 @@ type JobTokenScopes = map[int64]*JobTokenScope
 func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project) (JobTokenScopes, error) {
 	result := make(JobTokenScopes, len(projects))
 
+projectLoop:
 	for _, p := range projects {
 		if p == nil {
 			continue
@@ -27,9 +28,18 @@ func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project)
 
 		settings, _, err := c.api.JobTokenScope.GetProjectJobTokenAccessSettings(p.ID, gl.WithContext(ctx))
 		if err != nil {
+			if skipInaccessible(err, "job token scopes", p.PathWithNamespace) {
+				continue
+			}
 			return nil, fmt.Errorf("getting job token access settings for project %d: %w", p.ID, err)
 		}
 
+		// The job token scope is a composite resource (settings + both
+		// allowlists). These allowlist fetches deliberately do NOT use the
+		// graceful paginate helper: if an allowlist is inaccessible we skip the
+		// whole project (continue projectLoop) rather than emit a scope with a
+		// misleadingly-empty allowlist, which would read as drift — and on apply
+		// would delete entries we merely could not read.
 		projectOpts := &gl.GetJobTokenInboundAllowListOptions{
 			ListOptions: gl.ListOptions{Page: 1, PerPage: 100},
 		}
@@ -37,6 +47,9 @@ func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project)
 		for {
 			page, resp, err := c.api.JobTokenScope.GetProjectJobTokenInboundAllowList(p.ID, projectOpts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "job token inbound allowlist", p.PathWithNamespace) {
+					continue projectLoop
+				}
 				return nil, fmt.Errorf("listing job token inbound allowlist projects for project %d: %w", p.ID, err)
 			}
 			allowedProjects = append(allowedProjects, page...)
@@ -53,6 +66,9 @@ func (c *Client) ListJobTokenScopes(ctx context.Context, projects []*gl.Project)
 		for {
 			page, resp, err := c.api.JobTokenScope.GetJobTokenAllowlistGroups(p.ID, groupOpts, gl.WithContext(ctx))
 			if err != nil {
+				if skipInaccessible(err, "job token allowlist groups", p.PathWithNamespace) {
+					continue projectLoop
+				}
 				return nil, fmt.Errorf("listing job token allowlist groups for project %d: %w", p.ID, err)
 			}
 			allowedGroups = append(allowedGroups, page...)

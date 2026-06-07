@@ -25,17 +25,11 @@ func (c *Client) ListProtectedTags(ctx context.Context, projects []*gl.Project) 
 				PerPage: 100,
 			},
 		}
-		var tags []*gl.ProtectedTag
-		for {
-			page, resp, err := c.api.ProtectedTags.ListProtectedTags(p.ID, opts, gl.WithContext(ctx))
-			if err != nil {
-				return nil, fmt.Errorf("listing protected tags for project %d: %w", p.ID, err)
-			}
-			tags = append(tags, page...)
-			if resp.NextPage == 0 {
-				break
-			}
-			opts.Page = resp.NextPage
+		tags, err := paginate(&opts.ListOptions, "protected tags", p.PathWithNamespace, func() ([]*gl.ProtectedTag, *gl.Response, error) {
+			return c.api.ProtectedTags.ListProtectedTags(p.ID, opts, gl.WithContext(ctx))
+		})
+		if err != nil {
+			return nil, fmt.Errorf("listing protected tags for project %d: %w", p.ID, err)
 		}
 		if len(tags) > 0 {
 			result[p.ID] = tags

@@ -45,6 +45,54 @@ func TestWritePipelineSchedules(t *testing.T) {
 	compareGolden(t, "pipeline_schedules.tf", buf.String())
 }
 
+func TestPipelineScheduleResourceNamesCollision(t *testing.T) {
+	project := &gl.Project{
+		Path:      "my-project",
+		Namespace: &gl.ProjectNamespace{FullPath: "my-group"},
+	}
+	// All three descriptions normalize to the same base label and must stay unique.
+	schedules := []*gl.PipelineSchedule{
+		{Description: "Nightly build"},
+		{Description: "nightly-build"},
+		{Description: "nightly.build"},
+	}
+	got := pipelineScheduleResourceNames(project, schedules)
+	want := []string{
+		"my_group_my_project_nightly_build",
+		"my_group_my_project_nightly_build_1",
+		"my_group_my_project_nightly_build_2",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %d names, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("names[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+func TestPipelineScheduleVariableResourceNamesCollision(t *testing.T) {
+	// Two variable keys within one schedule normalize to the same label.
+	vars := []*gl.PipelineVariable{
+		{Key: "DEPLOY_ENV"},
+		{Key: "deploy-env"},
+	}
+	got := pipelineScheduleVariableResourceNames("my_group_my_project_nightly_build", vars)
+	want := []string{
+		"my_group_my_project_nightly_build_deploy_env",
+		"my_group_my_project_nightly_build_deploy_env_1",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %d names, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("names[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
 func TestNormalizeName(t *testing.T) {
 	tests := []struct {
 		input string
@@ -57,6 +105,12 @@ func TestNormalizeName(t *testing.T) {
 		{"a--b//c  d..e", "a_b_c_d_e"},
 		{"trailing-", "trailing"},
 		{"DEPLOY_ENV", "deploy_env"},
+		// Characters illegal in a terraform identifier must be sanitized, not
+		// passed through (which would produce an invalid resource label).
+		{`P1: "critical"`, "p1_critical"},
+		{"deploy (prod)!", "deploy_prod"},
+		{"a${b}", "a_b"},
+		{"won't fix", "won_t_fix"},
 	}
 	for _, tt := range tests {
 		got := normalizeName(tt.input)

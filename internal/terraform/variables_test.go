@@ -82,3 +82,43 @@ func TestGroupVariableResourceName(t *testing.T) {
 		}
 	}
 }
+
+func TestGroupVariableResourceNamesCollision(t *testing.T) {
+	group := &gl.Group{Path: "my-group"}
+	// Both keys normalize to the same label and must stay unique.
+	vars := []*gl.GroupVariable{
+		{Key: "MY.KEY", EnvironmentScope: "*"},
+		{Key: "MY-KEY", EnvironmentScope: "*"},
+	}
+	got := groupVariableResourceNames(group, vars)
+	want := []string{"my_group_my_key", "my_group_my_key_1"}
+	if len(got) != len(want) {
+		t.Fatalf("got %d names, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("names[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+func TestProjectVariableResourceNamesCollision(t *testing.T) {
+	project := &gl.Project{
+		Path:      "my-project",
+		Namespace: &gl.ProjectNamespace{FullPath: "my-group"},
+	}
+	vars := []*gl.ProjectVariable{
+		{Key: "MY.KEY", EnvironmentScope: "*"},
+		{Key: "MY-KEY", EnvironmentScope: "*"},
+	}
+	got := projectVariableResourceNames(project, vars)
+	want := []string{"my_group_my_project_my_key", "my_group_my_project_my_key_1"}
+	if len(got) != len(want) {
+		t.Fatalf("got %d names, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("names[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
