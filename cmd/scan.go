@@ -30,6 +30,8 @@ var (
 	scanTimeout         time.Duration
 	showPendingDeletion bool
 	hideArchived        bool
+	rateLimit           float64
+	concurrency         int
 )
 
 var scanCmd = &cobra.Command{
@@ -51,6 +53,8 @@ func init() {
 	scanCmd.Flags().DurationVar(&scanTimeout, "timeout", 0, "Maximum total scan duration (e.g. 30m); 0 disables the timeout")
 	scanCmd.Flags().BoolVar(&showPendingDeletion, "show-pending-deletion", false, "Include groups/projects in the deletion grace period (hidden by default)")
 	scanCmd.Flags().BoolVar(&hideArchived, "hide-archived", false, "Skip archived projects (shown by default)")
+	scanCmd.Flags().Float64Var(&rateLimit, "rate-limit", 10, "Max GitLab API requests per second (0 = unlimited). Conservative default avoids rate limits; raise for self-managed instances with more headroom")
+	scanCmd.Flags().IntVar(&concurrency, "concurrency", 10, "Max number of resource types fetched in parallel")
 }
 
 // withTimeout bounds ctx to d. A non-positive d returns ctx unchanged with a
@@ -105,7 +109,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 		"create_mr", createMR,
 	)
 
-	client, err := gitlab.NewClient(token, gitlabURL, gitlabGroup)
+	client, err := gitlab.NewClient(token, gitlabURL, gitlabGroup, gitlab.ClientConfig{
+		RateLimit:   rateLimit,
+		Concurrency: concurrency,
+	})
 	if err != nil {
 		return fmt.Errorf("creating client: %w", err)
 	}
